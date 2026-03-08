@@ -1,0 +1,24 @@
+name: flutter_usesense
+description: Flutter plugin wrapping the UseSense Android SDK for identity verification and liveness detection.
+version: 0.1.0
+homepage: https://github.com/qudusadeyemi/flutter-usesense
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.usesense.flutter
+        pluginClass: UseSensePlugin
