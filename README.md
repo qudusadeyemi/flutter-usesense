@@ -668,7 +668,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ## Support
 
-- **Documentation:** [docs.usesense.ai](https://docs.usesense.ai)
-- **Dashboard:** [app.usesense.ai](https://app.usesense.ai)
+- **Documentation:** [watchtower.usesense.ai/developer-docs](https://watchtower.usesense.ai/developer-docs)
+- **Dashboard:** [watchtower.usesense.ai](https://watchtower.usesense.ai)
 - **Email:** [support@usesense.ai](mailto:support@usesense.ai)
 - **Repository:** [github.com/usesense/usesense-flutter](https://github.com/usesense/usesense-flutter)
