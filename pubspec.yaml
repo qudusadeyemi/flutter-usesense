@@ -1,24 +1,39 @@
-name: flutter_usesense
-description: Flutter plugin wrapping the UseSense Android SDK for identity verification and liveness detection.
-version: 0.1.0
-homepage: https://github.com/qudusadeyemi/flutter-usesense
+name: usesense_flutter
+description: >
+  Flutter plugin for UseSense human presence verification. Wraps native iOS and
+  Android SDKs for DeepSense (device integrity), LiveSense (proof-of-life), and
+  MatchSense (identity collision detection).
+version: 1.0.0
+homepage: https://usesense.ai
+repository: https://github.com/usesense/usesense-flutter
+documentation: https://docs.usesense.ai
+topics:
+  - verification
+  - kyc
+  - liveness
+  - biometrics
+  - identity
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=3.10.0"
+  sdk: ">=3.2.0 <4.0.0"
+  flutter: ">=3.16.0"
 
 dependencies:
   flutter:
     sdk: flutter
+  plugin_platform_interface: ^2.1.8
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^5.0.0
+  pigeon: ^22.7.0
 
 flutter:
   plugin:
     platforms:
       android:
         package: com.usesense.flutter
-        pluginClass: UseSensePlugin
+        pluginClass: UseSenseFlutterPlugin
+      ios:
+        pluginClass: UseSenseFlutterPlugin
