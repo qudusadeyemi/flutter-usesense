@@ -1,10 +1,21 @@
+# Flutter/Dart
 .dart_tool/
 .packages
 build/
-android/build/
-.gradle/
-*.iml
-.idea/
-.DS_Store
-local.properties
 pubspec.lock
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# macOS
+.DS_Store
+
+# iOS
+example/ios/Pods/
+example/ios/.symlinks/
+
+# Android
+example/android/.gradle/
+example/android/build/
