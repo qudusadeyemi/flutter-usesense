@@ -78,7 +78,12 @@ enum class PigeonEventType(val raw: Int) {
   COMPLETE_STARTED(14),
   DECISION_RECEIVED(15),
   IMAGE_QUALITY_CHECK(16),
-  ERROR(17);
+  ERROR(17),
+  STEP_UP_TRIGGERED(18),
+  STEP_UP_COMPLETED(19),
+  FACE_GUIDE_READY(20),
+  COUNTDOWN_STARTED(21),
+  GEOMETRIC_COHERENCE_COMPLETED(22);
 
   companion object {
     fun ofRaw(raw: Int): PigeonEventType? {
@@ -119,12 +124,11 @@ data class PigeonUseSenseConfig(
   val apiKey: String,
   val environment: PigeonUseSenseEnvironment = PigeonUseSenseEnvironment.AUTO,
   val baseUrl: String? = null,
-  val gatewayKey: String? = null,
   val branding: PigeonBrandingConfig? = null,
   val googleCloudProjectNumber: Long? = null,
 ) {
   fun toList(): List<Any?> {
-    return listOf(apiKey, environment.raw, baseUrl, gatewayKey, branding?.toList(), googleCloudProjectNumber)
+    return listOf(apiKey, environment.raw, baseUrl, branding?.toList(), googleCloudProjectNumber)
   }
 
   companion object {
@@ -133,9 +137,8 @@ data class PigeonUseSenseConfig(
         apiKey = pigeonVar_list[0] as String,
         environment = PigeonUseSenseEnvironment.ofRaw(pigeonVar_list[1] as Int)!!,
         baseUrl = pigeonVar_list[2] as String?,
-        gatewayKey = pigeonVar_list[3] as String?,
-        branding = (pigeonVar_list[4] as List<Any?>?)?.let { PigeonBrandingConfig.fromList(it) },
-        googleCloudProjectNumber = pigeonVar_list[5] as Long?,
+        branding = (pigeonVar_list[3] as List<Any?>?)?.let { PigeonBrandingConfig.fromList(it) },
+        googleCloudProjectNumber = pigeonVar_list[4] as Long?,
       )
     }
   }
@@ -165,6 +168,23 @@ data class PigeonVerificationRequest(
   }
 }
 
+/** Request to start a verification session with a pre-exchanged token. */
+data class PigeonTokenExchangeRequest(
+  val clientToken: String,
+) {
+  fun toList(): List<Any?> {
+    return listOf(clientToken)
+  }
+
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): PigeonTokenExchangeRequest {
+      return PigeonTokenExchangeRequest(
+        clientToken = pigeonVar_list[0] as String,
+      )
+    }
+  }
+}
+
 /** The outcome of a completed verification session. */
 data class PigeonUseSenseResult(
   val sessionId: String,
@@ -172,9 +192,17 @@ data class PigeonUseSenseResult(
   val identityId: String? = null,
   val decision: String,
   val timestamp: String,
+  val channelTrustScore: Long? = null,
+  val livenessScore: Long? = null,
+  val dedupeRiskScore: Long? = null,
+  val channelTrustVerdict: String? = null,
+  val livenessVerdict: String? = null,
+  val dedupeVerdict: String? = null,
+  val stepUpTriggered: Boolean? = null,
+  val stepUpPassed: Boolean? = null,
 ) {
   fun toList(): List<Any?> {
-    return listOf(sessionId, sessionType, identityId, decision, timestamp)
+    return listOf(sessionId, sessionType, identityId, decision, timestamp, channelTrustScore, livenessScore, dedupeRiskScore, channelTrustVerdict, livenessVerdict, dedupeVerdict, stepUpTriggered, stepUpPassed)
   }
 
   companion object {
@@ -185,6 +213,14 @@ data class PigeonUseSenseResult(
         identityId = pigeonVar_list[2] as String?,
         decision = pigeonVar_list[3] as String,
         timestamp = pigeonVar_list[4] as String,
+        channelTrustScore = pigeonVar_list[5] as Long?,
+        livenessScore = pigeonVar_list[6] as Long?,
+        dedupeRiskScore = pigeonVar_list[7] as Long?,
+        channelTrustVerdict = pigeonVar_list[8] as String?,
+        livenessVerdict = pigeonVar_list[9] as String?,
+        dedupeVerdict = pigeonVar_list[10] as String?,
+        stepUpTriggered = pigeonVar_list[11] as Boolean?,
+        stepUpPassed = pigeonVar_list[12] as Boolean?,
       )
     }
   }
@@ -247,6 +283,7 @@ private object UseSensePigeonCodec : StandardMessageCodec() {
       132.toByte() -> PigeonUseSenseResult.fromList(readValue(buffer) as List<Any?>)
       133.toByte() -> PigeonUseSenseEvent.fromList(readValue(buffer) as List<Any?>)
       134.toByte() -> PigeonUseSenseError.fromList(readValue(buffer) as List<Any?>)
+      135.toByte() -> PigeonTokenExchangeRequest.fromList(readValue(buffer) as List<Any?>)
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -277,6 +314,10 @@ private object UseSensePigeonCodec : StandardMessageCodec() {
         stream.write(134)
         writeValue(stream, value.toList())
       }
+      is PigeonTokenExchangeRequest -> {
+        stream.write(135)
+        writeValue(stream, value.toList())
+      }
       else -> super.writeValue(stream, value)
     }
   }
@@ -286,6 +327,7 @@ private object UseSensePigeonCodec : StandardMessageCodec() {
 interface UseSenseHostApi {
   fun initialize(config: PigeonUseSenseConfig, callback: (Result<Unit>) -> Unit)
   fun startVerification(request: PigeonVerificationRequest, callback: (Result<PigeonUseSenseResult>) -> Unit)
+  fun startVerificationWithToken(request: PigeonTokenExchangeRequest, callback: (Result<PigeonUseSenseResult>) -> Unit)
   fun startRemoteEnrollment(remoteEnrollmentId: String, callback: (Result<PigeonUseSenseResult>) -> Unit)
   fun startRemoteVerification(remoteSessionId: String, callback: (Result<PigeonUseSenseResult>) -> Unit)
   fun isInitialized(): Boolean
@@ -330,6 +372,29 @@ interface UseSenseHostApi {
             val args = message as List<Any?>
             val requestArg = args[0] as PigeonVerificationRequest
             api.startVerification(requestArg) { result ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(wrapError(error))
+              } else {
+                reply.reply(wrapResult(result.getOrNull()))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(
+          binaryMessenger,
+          "dev.flutter.pigeon.usesense_flutter.UseSenseHostApi.startVerificationWithToken$separatedMessageChannelSuffix",
+          codec
+        )
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val requestArg = args[0] as PigeonTokenExchangeRequest
+            api.startVerificationWithToken(requestArg) { result ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(wrapError(error))

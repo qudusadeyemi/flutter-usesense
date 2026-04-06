@@ -43,7 +43,7 @@ class BrandingConfig {
   /// URL of the logo shown in the UI. Null inherits from organization settings.
   final String? logoUrl;
 
-  /// Primary color hex string (e.g. `#4f46e5`). Null inherits from
+  /// Primary color hex string (e.g. `#4F7CFF`). Null inherits from
   /// organization settings.
   final String? primaryColor;
 
@@ -67,22 +67,19 @@ class UseSenseConfig {
     required this.apiKey,
     this.environment = UseSenseEnvironment.auto,
     this.baseUrl,
-    this.gatewayKey,
     this.branding,
     this.googleCloudProjectNumber,
   });
 
-  /// Your UseSense API key.
+  /// Your UseSense API key (`pk_prod_*`, `pk_sandbox_*`, etc.).
   final String apiKey;
 
   /// The backend environment. Defaults to [UseSenseEnvironment.auto].
   final UseSenseEnvironment environment;
 
-  /// Override the default backend URL. Null uses the SDK default.
+  /// Override the default backend URL. Null uses the SDK default
+  /// (`https://api.usesense.ai/v1`).
   final String? baseUrl;
-
-  /// Optional Supabase gateway key.
-  final String? gatewayKey;
 
   /// Optional UI branding overrides.
   final BrandingConfig? branding;
@@ -124,6 +121,14 @@ class UseSenseResult {
     this.identityId,
     required this.decision,
     required this.timestamp,
+    this.channelTrustScore,
+    this.livenessScore,
+    this.dedupeRiskScore,
+    this.channelTrustVerdict,
+    this.livenessVerdict,
+    this.dedupeVerdict,
+    this.stepUpTriggered,
+    this.stepUpPassed,
   });
 
   /// Unique session identifier.
@@ -141,6 +146,30 @@ class UseSenseResult {
 
   /// ISO 8601 timestamp of the decision.
   final String timestamp;
+
+  /// DeepSense channel trust score (0-100). Null if not available.
+  final int? channelTrustScore;
+
+  /// LiveSense liveness score (0-100). Null if not available.
+  final int? livenessScore;
+
+  /// MatchSense deduplication risk score (0-100). Null if not available.
+  final int? dedupeRiskScore;
+
+  /// Channel trust pillar verdict: `PASS`, `FAIL`, or `REVIEW`.
+  final String? channelTrustVerdict;
+
+  /// Liveness pillar verdict: `PASS`, `FAIL`, or `REVIEW`.
+  final String? livenessVerdict;
+
+  /// Dedupe pillar verdict: `PASS`, `FAIL`, or `REVIEW`.
+  final String? dedupeVerdict;
+
+  /// Whether the inline step-up was triggered during this session.
+  final bool? stepUpTriggered;
+
+  /// Whether the inline step-up challenge was passed. Null if not triggered.
+  final bool? stepUpPassed;
 
   /// Whether the decision is `APPROVE`.
   bool get isApproved => decision == 'APPROVE';
@@ -211,6 +240,21 @@ enum UseSenseEventType {
 
   /// An error occurred.
   error,
+
+  /// Suspicion engine triggered inline step-up.
+  stepUpTriggered,
+
+  /// Inline step-up challenge finished.
+  stepUpCompleted,
+
+  /// Face positioned correctly in oval guide.
+  faceGuideReady,
+
+  /// 3-2-1 countdown began.
+  countdownStarted,
+
+  /// 3D geometric coherence analysis completed.
+  geometricCoherenceCompleted,
 }
 
 /// An event emitted by the native SDK during a verification session.

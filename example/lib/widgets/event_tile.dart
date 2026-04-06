@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:usesense_flutter/usesense_flutter.dart';
 
+import '../main.dart';
+
 class EventTile extends StatelessWidget {
   const EventTile({super.key, required this.event});
 
@@ -54,15 +56,24 @@ class EventTile extends StatelessWidget {
       UseSenseEventType.decisionReceived => Icons.gavel,
       UseSenseEventType.imageQualityCheck => Icons.image_search,
       UseSenseEventType.error => Icons.error_outline,
+      UseSenseEventType.stepUpTriggered => Icons.shield,
+      UseSenseEventType.stepUpCompleted => Icons.verified_user,
+      UseSenseEventType.faceGuideReady => Icons.face,
+      UseSenseEventType.countdownStarted => Icons.timer,
+      UseSenseEventType.geometricCoherenceCompleted => Icons.view_in_ar,
     };
   }
 
   static Color _colorFor(UseSenseEventType type) {
     return switch (type) {
-      UseSenseEventType.error => Colors.red,
-      UseSenseEventType.permissionsDenied => Colors.orange,
-      UseSenseEventType.decisionReceived => Colors.green,
-      _ => Colors.blueGrey,
+      UseSenseEventType.error => UseSenseColors.red5,
+      UseSenseEventType.permissionsDenied => UseSenseColors.warm5,
+      UseSenseEventType.decisionReceived => UseSenseColors.green5,
+      UseSenseEventType.stepUpTriggered => UseSenseColors.warm5,
+      UseSenseEventType.stepUpCompleted => UseSenseColors.purple5,
+      UseSenseEventType.geometricCoherenceCompleted => UseSenseColors.blue5,
+      UseSenseEventType.faceGuideReady => UseSenseColors.green5,
+      _ => UseSenseColors.neutral4,
     };
   }
 
@@ -86,6 +97,11 @@ class EventTile extends StatelessWidget {
       UseSenseEventType.decisionReceived => 'Decision received',
       UseSenseEventType.imageQualityCheck => 'Image quality check',
       UseSenseEventType.error => 'Error',
+      UseSenseEventType.stepUpTriggered => 'Step-up triggered',
+      UseSenseEventType.stepUpCompleted => 'Step-up completed',
+      UseSenseEventType.faceGuideReady => 'Face positioned',
+      UseSenseEventType.countdownStarted => 'Countdown started',
+      UseSenseEventType.geometricCoherenceCompleted => '3D analysis complete',
     };
   }
 }

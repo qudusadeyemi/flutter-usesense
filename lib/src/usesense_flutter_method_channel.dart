@@ -46,6 +46,20 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
   }
 
   @override
+  Future<UseSenseResult> startVerificationWithToken(
+    String clientToken,
+  ) async {
+    try {
+      final result = await _hostApi.startVerificationWithToken(
+        PigeonTokenExchangeRequest(clientToken: clientToken),
+      );
+      return _fromPigeonResult(result);
+    } on PlatformException catch (e) {
+      throw _wrapError(e);
+    }
+  }
+
+  @override
   Future<UseSenseResult> startRemoteEnrollment(
     String remoteEnrollmentId,
   ) async {
@@ -146,7 +160,6 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
       environment:
           PigeonUseSenseEnvironment.values[config.environment.index],
       baseUrl: config.baseUrl,
-      gatewayKey: config.gatewayKey,
       branding: config.branding != null
           ? PigeonBrandingConfig(
               displayName: config.branding!.displayName,
@@ -177,6 +190,14 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
       identityId: result.identityId,
       decision: result.decision,
       timestamp: result.timestamp,
+      channelTrustScore: result.channelTrustScore,
+      livenessScore: result.livenessScore,
+      dedupeRiskScore: result.dedupeRiskScore,
+      channelTrustVerdict: result.channelTrustVerdict,
+      livenessVerdict: result.livenessVerdict,
+      dedupeVerdict: result.dedupeVerdict,
+      stepUpTriggered: result.stepUpTriggered,
+      stepUpPassed: result.stepUpPassed,
     );
   }
 
@@ -194,6 +215,7 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
   bool _isRetryableCode(String code) {
     return code == 'network_error' ||
         code == 'network_timeout' ||
-        code == 'upload_failed';
+        code == 'upload_failed' ||
+        code == 'rate_limited';
   }
 }

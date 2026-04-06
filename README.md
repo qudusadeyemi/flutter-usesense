@@ -20,7 +20,7 @@ UseSense verifies human presence through three pillars:
 | Dart | 3.2+ |
 | iOS | 16.0+ |
 | Xcode | 15.0+ |
-| Android | API 24 (Android 7.0) |
+| Android | API 28 (Android 9+) |
 | Hardware | Front-facing camera |
 
 ---
@@ -31,7 +31,7 @@ Add `usesense_flutter` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  usesense_flutter: ^1.0.0
+  usesense_flutter: ^4.1.0
 ```
 
 Then run:
@@ -149,10 +149,9 @@ await useSense.initialize(
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `apiKey` | `String` | **required** | Your UseSense API key. Production keys start with `pk_*`; sandbox keys start with `sk_*` or `dk_*`. |
+| `apiKey` | `String` | **required** | Your UseSense API key. Production keys start with `pk_live_*`; sandbox keys start with `pk_sandbox_*` or `dk_*`. **Never** embed `sk_*` (server-side) keys in client apps. |
 | `environment` | `UseSenseEnvironment` | `.auto` | Backend environment. `.auto` detects from the key prefix. |
-| `baseUrl` | `String?` | `null` | Override the default backend URL. Useful for on-premise deployments. |
-| `gatewayKey` | `String?` | `null` | Optional gateway key. |
+| `baseUrl` | `String?` | `https://api.usesense.ai/v1` | Backend URL. The Cloudflare Worker proxy is the only supported entry point. Override only for on-premise deployments. |
 | `branding` | `BrandingConfig?` | `null` | UI customization for the verification screen. |
 | `googleCloudProjectNumber` | `int?` | `null` | Google Cloud project number for Android Play Integrity attestation. |
 
@@ -173,7 +172,7 @@ await useSense.initialize(
 |-------|-------------|
 | `sandbox` | Sandbox environment for development and testing. |
 | `production` | Production environment for live users. |
-| `auto` | Auto-detect from API key prefix (`pk_*` = production, `sk_*`/`dk_*` = sandbox). |
+| `auto` | Auto-detect from API key prefix (`pk_live_*` = production, `pk_sandbox_*`/`dk_*` = sandbox). |
 
 ---
 
@@ -223,6 +222,32 @@ final result = await useSense.startRemoteEnrollment('enr_xyz789');
 final result = await useSense.startRemoteVerification('ses_abc456');
 ```
 
+### Server-Side Init / Token Exchange
+
+For flows where your backend creates the session (e.g. reference image matching for KYC, or zero-credential exposure on the client), use the token exchange pattern:
+
+1. Your backend calls `POST /v1/sessions/create-token` with the desired session parameters and receives a short-lived `client_token`.
+2. The `client_token` is passed to your app (e.g. via your own API).
+3. The SDK exchanges the token for a session and runs verification -- no API key or session details are exposed on the client.
+
+This is the recommended approach when you need to attach a reference image, enforce server-side policy, or keep all credentials off the device.
+
+```dart
+// Your backend returns a client_token to the app
+final clientToken = await yourBackend.createVerificationToken(userId: 'user_12345');
+
+// The SDK exchanges the token and runs the verification flow
+final result = await useSense.startVerificationWithToken('cli_tok_...');
+
+if (result.isApproved) {
+  print('Verified. Identity: ${result.identityId}');
+}
+```
+
+**Use cases:**
+- **Reference image matching (KYC):** Your backend attaches a government ID photo to the session before issuing the token. The SDK captures a live selfie and the server compares them.
+- **Zero-credential exposure:** The client never sees an API key or session configuration -- only the opaque, single-use token.
+
 ### VerificationRequest
 
 | Property | Type | Default | Description |
@@ -252,6 +277,35 @@ final result = await useSense.startRemoteVerification('ses_abc456');
 | `isApproved` | `bool` | `true` when `decision == "APPROVE"`. |
 | `isRejected` | `bool` | `true` when `decision == "REJECT"`. |
 | `isPendingReview` | `bool` | `true` when `decision == "MANUAL_REVIEW"`. |
+
+### Pillar Scores
+
+Starting in v4.1.0, `UseSenseResult` includes per-pillar scores and verdicts for client-side UI feedback. These are **advisory only** -- always rely on the server-side webhook for access-control decisions.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `channelTrustScore` | `int?` | DeepSense channel integrity score (0-100). |
+| `livenessScore` | `int?` | LiveSense liveness detection score (0-100). |
+| `dedupeRiskScore` | `int?` | MatchSense deduplication risk score (0-100). |
+| `channelTrustVerdict` | `String?` | `"PASS"`, `"FAIL"`, or `"REVIEW"`. |
+| `livenessVerdict` | `String?` | `"PASS"`, `"FAIL"`, or `"REVIEW"`. |
+| `dedupeVerdict` | `String?` | `"PASS"`, `"FAIL"`, or `"REVIEW"`. |
+| `stepUpTriggered` | `bool?` | Whether a step-up challenge was triggered by SenSei. |
+| `stepUpPassed` | `bool?` | Whether the step-up challenge was passed. |
+
+```dart
+final result = await useSense.startVerification(
+  VerificationRequest(sessionType: SessionType.enrollment),
+);
+
+print('Liveness: ${result.livenessVerdict} (${result.livenessScore})');
+print('Channel trust: ${result.channelTrustVerdict} (${result.channelTrustScore})');
+print('Dedupe risk: ${result.dedupeVerdict} (${result.dedupeRiskScore})');
+
+if (result.stepUpTriggered == true) {
+  print('Step-up was triggered; passed: ${result.stepUpPassed}');
+}
+```
 
 ### Decision Handling Example
 
@@ -360,6 +414,11 @@ cancelSub.cancel();
 | `completeStarted` | Server-side analysis started. | |
 | `decisionReceived` | Decision returned from server. | `decision` |
 | `imageQualityCheck` | Image quality assessment result. | |
+| `stepUpTriggered` | SenSei triggered a step-up challenge. | `reason` |
+| `stepUpCompleted` | Step-up challenge completed. | `passed` |
+| `faceGuideReady` | Face guide overlay is positioned and ready. | |
+| `countdownStarted` | Capture countdown has begun. | `seconds` |
+| `geometricCoherenceCompleted` | Geometric coherence analysis finished. | `passed` |
 | `error` | An error occurred during the session. | `code`, `message` |
 
 ---
@@ -408,12 +467,18 @@ try {
 | 1003 | `microphonePermissionDenied` | No | User denied microphone permission. |
 | 2001 | `networkError` | Yes | Network communication failure. |
 | 2002 | `networkTimeout` | Yes | Network request timed out. |
+| 2003 | `rateLimited` | Yes | Too many requests. Back off and retry after a delay. |
 | 3001 | `sessionExpired` | No | Session expired (15-minute limit). Start a new session. |
 | 3002 | `uploadFailed` | Yes | Data upload to server failed. |
+| 3003 | `nonceMismatch` | No | Server nonce does not match the expected value. |
+| 3004 | `tokenExpired` | No | The client token has expired. Request a new token from your backend. |
+| 3005 | `tokenAlreadyUsed` | No | The client token has already been consumed. Tokens are single-use. |
+| 3006 | `tokenNotFound` | No | The client token was not found. Verify the token value. |
 | 4001 | `captureFailed` | No | Camera frame capture failed. |
 | 4002 | `encodingFailed` | No | Frame encoding failed. |
 | 5001 | `invalidConfig` | No | Invalid SDK configuration (e.g. missing or malformed API key). |
 | 6001 | `quotaExceeded` | No | Organization verification quota exceeded. |
+| 6002 | `insufficientCredits` | No | Account does not have enough credits to start a session. |
 | 7001 | `sdkNotInitialized` | No | `initialize()` was not called before a verification method. |
 | 8001 | `sessionCancelled` | No | User cancelled the verification session. |
 
@@ -577,7 +642,7 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 
 | | Sandbox | Production |
 |-|---------|------------|
-| API key prefix | `sk_*` or `dk_*` | `pk_*` |
+| API key prefix | `pk_sandbox_*` or `dk_*` | `pk_live_*` |
 | Environment | `UseSenseEnvironment.sandbox` | `UseSenseEnvironment.production` |
 | Real verification | No (simulated responses) | Yes |
 | Billing | Not charged | Counted against quota |
@@ -588,7 +653,7 @@ When `environment` is set to `.auto` (the default), the SDK detects sandbox vs. 
 ```dart
 // Sandbox -- for development
 await useSense.initialize(
-  UseSenseConfig(apiKey: 'sk_test_your_sandbox_key'),
+  UseSenseConfig(apiKey: 'pk_sandbox_your_sandbox_key'),
 );
 
 // Production -- for live users
@@ -607,7 +672,7 @@ await useSense.initialize(
 
 ### Camera permission denied on Android
 
-Ensure `<uses-permission android:name="android.permission.CAMERA" />` is present in your `AndroidManifest.xml`. On Android 6.0+, runtime permission is requested automatically by the native SDK.
+Ensure `<uses-permission android:name="android.permission.CAMERA" />` is present in your `AndroidManifest.xml`. On Android 9+, runtime permission is requested automatically by the native SDK.
 
 ### Camera permission denied on iOS
 

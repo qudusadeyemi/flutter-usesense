@@ -4,14 +4,14 @@ plugins {
 }
 
 group = "com.usesense.flutter"
-version = "1.0.0"
+version = "4.1.0"
 
 android {
     namespace = "com.usesense.flutter"
     compileSdk = 35
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 28
     }
 
     compileOptions {
@@ -26,7 +26,7 @@ android {
 
 dependencies {
     // UseSense Android SDK
-    implementation("ai.usesense:sdk:1.0.0")
+    implementation("ai.usesense:sdk:4.1.0")
 
     // Flutter embedding (provided by the Flutter build system)
     compileOnly("io.flutter:flutter_embedding_debug:1.0.0-")

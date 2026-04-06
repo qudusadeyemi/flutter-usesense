@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:usesense_flutter/usesense_flutter.dart';
 
+import '../main.dart';
 import '../widgets/event_tile.dart';
 import 'result_screen.dart';
 
@@ -24,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _identityIdController = TextEditingController();
+  final _clientTokenController = TextEditingController();
   final _events = <UseSenseEvent>[];
   bool _loading = false;
   StreamSubscription<UseSenseEvent>? _eventSub;
@@ -43,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _eventSub?.cancel();
     _cancelledSub?.cancel();
     _identityIdController.dispose();
+    _clientTokenController.dispose();
     super.dispose();
   }
 
@@ -112,6 +115,31 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _startTokenExchange() async {
+    final clientToken = _clientTokenController.text.trim();
+    if (clientToken.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a client token from your backend.')),
+      );
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final result = await widget.useSense.startVerificationWithToken(
+        clientToken,
+      );
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => ResultScreen(result: result)),
+        );
+      }
+    } on UseSenseError catch (e) {
+      if (mounted) _showError(e);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   void _showError(UseSenseError error) {
     showDialog(
       context: context,
@@ -166,20 +194,36 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(
                       widget.initialized ? Icons.check_circle : Icons.error,
                       color: widget.initialized
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.error,
+                          ? UseSenseColors.green5
+                          : UseSenseColors.red5,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        widget.initError ??
-                            (widget.initialized
-                                ? 'SDK initialized (sandbox)'
-                                : 'Initializing...'),
-                        style: theme.textTheme.bodyLarge,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.initError ??
+                                (widget.initialized
+                                    ? 'SDK initialized (sandbox)'
+                                    : 'Initializing...'),
+                            style: theme.textTheme.bodyLarge,
+                          ),
+                          Text(
+                            'v4.1.0',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: UseSenseColors.neutral4,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    if (_loading) const CircularProgressIndicator(),
+                    if (_loading)
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                   ],
                 ),
               ),
@@ -199,14 +243,29 @@ class _HomeScreenState extends State<HomeScreen> {
               controller: _identityIdController,
               decoration: const InputDecoration(
                 labelText: 'Identity ID',
-                hintText: 'idn_...',
-                border: OutlineInputBorder(),
+                hintText: 'ident_...',
               ),
             ),
             const SizedBox(height: 8),
             FilledButton.tonal(
               onPressed: isReady ? _startAuthentication : null,
               child: const Text('Authenticate'),
+            ),
+            const SizedBox(height: 12),
+
+            // Server-side init token exchange
+            TextField(
+              controller: _clientTokenController,
+              decoration: const InputDecoration(
+                labelText: 'Client Token (server-side init)',
+                hintText: 'cli_tok_...',
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: isReady ? _startTokenExchange : null,
+              icon: const Icon(Icons.swap_horiz),
+              label: const Text('Verify with Token'),
             ),
             const SizedBox(height: 16),
 

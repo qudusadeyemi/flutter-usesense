@@ -104,7 +104,6 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
                 apiKey = config.apiKey,
                 environment = environment,
                 baseUrl = config.baseUrl ?: UseSenseConfig.DEFAULT_BASE_URL,
-                gatewayKey = config.gatewayKey,
                 branding = brandingConfig,
                 googleCloudProjectNumber = config.googleCloudProjectNumber
                     ?: UseSenseConfig.DEFAULT_GOOGLE_CLOUD_PROJECT_NUMBER,
@@ -155,6 +154,44 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
         )
 
         UseSense.startVerification(currentActivity, nativeRequest, object : UseSenseCallback {
+            override fun onSuccess(result: UseSenseResult) {
+                mainHandler.post {
+                    callback(Result.success(mapResultToPigeon(result)))
+                }
+            }
+
+            override fun onError(error: UseSenseError) {
+                mainHandler.post {
+                    callback(Result.failure(mapErrorToFlutter(error)))
+                }
+            }
+
+            override fun onCancelled() {
+                mainHandler.post {
+                    flutterApi?.onCancelled {}
+                    callback(Result.failure(FlutterError("session_cancelled", "User cancelled the verification session.", null)))
+                }
+            }
+        })
+    }
+
+    override fun startVerificationWithToken(
+        request: PigeonTokenExchangeRequest,
+        callback: (Result<PigeonUseSenseResult>) -> Unit,
+    ) {
+        val currentActivity = activity
+        if (currentActivity == null) {
+            callback(Result.failure(FlutterError("sdk_not_initialized", "Activity is not available. Ensure the plugin is attached to an Activity.", null)))
+            return
+        }
+        if (!UseSense.isInitialized) {
+            callback(Result.failure(FlutterError("sdk_not_initialized", "UseSense SDK is not initialized. Call initialize() first.", null)))
+            return
+        }
+
+        // The native SDK exchanges the client token for a full session,
+        // then proceeds with the normal camera capture flow.
+        UseSense.startVerificationWithToken(currentActivity, request.clientToken, object : UseSenseCallback {
             override fun onSuccess(result: UseSenseResult) {
                 mainHandler.post {
                     callback(Result.success(mapResultToPigeon(result)))
@@ -288,6 +325,11 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
             EventType.DECISION_RECEIVED -> PigeonEventType.DECISION_RECEIVED
             EventType.IMAGE_QUALITY_CHECK -> PigeonEventType.IMAGE_QUALITY_CHECK
             EventType.ERROR -> PigeonEventType.ERROR
+            EventType.STEP_UP_TRIGGERED -> PigeonEventType.STEP_UP_TRIGGERED
+            EventType.STEP_UP_COMPLETED -> PigeonEventType.STEP_UP_COMPLETED
+            EventType.FACE_GUIDE_READY -> PigeonEventType.FACE_GUIDE_READY
+            EventType.COUNTDOWN_STARTED -> PigeonEventType.COUNTDOWN_STARTED
+            EventType.GEOMETRIC_COHERENCE_COMPLETED -> PigeonEventType.GEOMETRIC_COHERENCE_COMPLETED
         }
 
         // Convert data map values to platform-channel-compatible types.
@@ -313,6 +355,14 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
             identityId = result.identityId,
             decision = result.decision,
             timestamp = result.timestamp,
+            channelTrustScore = result.channelTrustScore?.toLong(),
+            livenessScore = result.livenessScore?.toLong(),
+            dedupeRiskScore = result.dedupeRiskScore?.toLong(),
+            channelTrustVerdict = result.pillarVerdicts?.channelTrust,
+            livenessVerdict = result.pillarVerdicts?.liveness,
+            dedupeVerdict = result.pillarVerdicts?.dedupe,
+            stepUpTriggered = result.inlineStepUp?.triggered,
+            stepUpPassed = result.inlineStepUp?.passed,
         )
     }
 
@@ -323,12 +373,18 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
             UseSenseError.MICROPHONE_PERMISSION_DENIED -> "microphone_permission_denied"
             UseSenseError.NETWORK_ERROR -> "network_error"
             UseSenseError.NETWORK_TIMEOUT -> "network_timeout"
+            UseSenseError.RATE_LIMITED -> "rate_limited"
             UseSenseError.SESSION_EXPIRED -> "session_expired"
             UseSenseError.UPLOAD_FAILED -> "upload_failed"
+            UseSenseError.NONCE_MISMATCH -> "nonce_mismatch"
+            UseSenseError.TOKEN_EXPIRED -> "token_expired"
+            UseSenseError.TOKEN_ALREADY_USED -> "token_already_used"
+            UseSenseError.TOKEN_NOT_FOUND -> "token_not_found"
             UseSenseError.CAPTURE_FAILED -> "capture_failed"
             UseSenseError.ENCODING_FAILED -> "encoding_failed"
             UseSenseError.INVALID_CONFIG -> "invalid_config"
             UseSenseError.QUOTA_EXCEEDED -> "quota_exceeded"
+            UseSenseError.INSUFFICIENT_CREDITS -> "insufficient_credits"
             else -> "sdk_error"
         }
         return FlutterError(code, error.message, error.details)

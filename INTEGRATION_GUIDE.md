@@ -1,4 +1,4 @@
-# UseSense Flutter Integration Guide
+# UseSense Flutter Integration Guide (v4.1.0)
 
 This guide covers how the `usesense_flutter` plugin works end-to-end, from
 SDK initialization through webhook verification on your backend. It is written
@@ -9,16 +9,58 @@ a production application.
 
 ## Table of Contents
 
-1. [How Verification Works](#1-how-verification-works)
-2. [Sequence Diagram](#2-sequence-diagram)
-3. [Why Three Independent Pillars?](#3-why-three-independent-pillars)
-4. [Flutter-Specific Considerations](#4-flutter-specific-considerations)
-5. [Webhook Setup](#5-webhook-setup)
-6. [Going to Production Checklist](#6-going-to-production-checklist)
+1. [What's New in v4.1](#1-whats-new-in-v41)
+2. [How Verification Works](#2-how-verification-works)
+3. [Auth Architecture](#3-auth-architecture)
+4. [Server-Side Init (Token Exchange)](#4-server-side-init-token-exchange)
+5. [Sequence Diagram](#5-sequence-diagram)
+6. [Why Three Independent Pillars?](#6-why-three-independent-pillars)
+7. [Pillar Scores in UseSenseResult](#7-pillar-scores-in-usesenseresult)
+8. [Flutter-Specific Considerations](#8-flutter-specific-considerations)
+9. [Webhook Setup](#9-webhook-setup)
+10. [Going to Production Checklist](#10-going-to-production-checklist)
 
 ---
 
-## 1. How Verification Works
+## 1. What's New in v4.1
+
+v4.1.0 introduces significant enhancements to liveness detection, fraud
+prevention, and the integration model:
+
+- **Geometric Coherence (3D Liveness).** The native SDKs now perform 3D
+  geometric coherence checks during the liveness challenge, detecting flat
+  images, masks, and deepfake injections with higher accuracy.
+
+- **Inline Step-Up.** When SenSei detects elevated risk during a session,
+  the native SDK can transparently escalate the challenge without restarting
+  the session. Step-up modules include:
+  - **Suspicion Engine** -- behavioral anomaly detection that triggers
+    additional challenge frames.
+  - **Flash Reflection** -- a screen flash challenge that verifies specular
+    reflection on a live face surface.
+  - **RMAS (Randomized Micro-Action Sequence)** -- a rapid series of
+    micro-prompts (blink, nod, turn) that defeat pre-recorded attacks.
+
+- **Screen Detection.** The native SDKs now detect when a screen (phone,
+  tablet, monitor) is being held in front of the camera, blocking
+  photo-of-screen and video-replay attacks at the capture layer.
+
+- **Cloudflare Worker Proxy Architecture.** All SDK traffic routes through
+  `api.usesense.ai` (a Cloudflare Worker). Supabase credentials are
+  injected server-side -- integrators never handle or see gateway keys.
+
+- **Server-Side Init (Token Exchange).** A new two-phase flow allows your
+  backend to create a short-lived client token, enabling reference image
+  matching and zero-credential mobile deployments.
+
+- **Pillar Scores in Client Result.** `UseSenseResult` now includes
+  individual pillar scores, per-pillar verdicts, and inline step-up status.
+
+- **Android minimum raised to API 28** (Android 9.0 Pie).
+
+---
+
+## 2. How Verification Works
 
 A verification session proceeds through the following steps:
 
@@ -83,21 +125,24 @@ A verification session proceeds through the following steps:
 5. **SDK returns a client-side result.** The `Future<UseSenseResult>`
    resolves with a `UseSenseResult` containing:
 
-   | Field         | Type      | Description                              |
-   |---------------|-----------|------------------------------------------|
-   | `sessionId`   | `String`  | Unique session identifier (`ses_...`)    |
-   | `sessionType` | `String?` | `enrollment` or `authentication`         |
-   | `identityId`  | `String?` | Identity created or verified             |
-   | `decision`    | `String`  | `APPROVE`, `REJECT`, or `MANUAL_REVIEW`  |
-   | `timestamp`   | `String`  | ISO 8601 timestamp of the decision       |
+   | Field                | Type                   | Description                                        |
+   |----------------------|------------------------|----------------------------------------------------|
+   | `sessionId`          | `String`               | Unique session identifier (`ses_...`)              |
+   | `sessionType`        | `String?`              | `enrollment` or `authentication`                   |
+   | `identityId`         | `String?`              | Identity created or verified                       |
+   | `decision`           | `String`               | `APPROVE`, `REJECT`, or `MANUAL_REVIEW`            |
+   | `timestamp`          | `String`               | ISO 8601 timestamp of the decision                 |
+   | `pillarScores`       | `PillarScores?`        | Individual pillar scores (see Section 7)           |
+   | `pillarVerdicts`     | `PillarVerdicts?`      | Per-pillar pass/fail verdicts (see Section 7)      |
+   | `stepUpStatus`       | `StepUpStatus?`        | Inline step-up outcome, if triggered               |
 
    Convenience getters: `result.isApproved`, `result.isRejected`,
    `result.isPendingReview`.
 
-   **Scores are NOT exposed in the client-side result.** Individual pillar
-   scores (channel trust, liveness, match) and the fused
-   `presenceConfidence` score are redacted from the SDK response for
-   security. They are only delivered to your backend via the signed webhook.
+   As of v4.1.0, individual pillar scores and verdicts are available in the
+   client-side result (see [Section 7](#7-pillar-scores-in-usesenseresult)).
+   The definitive, authoritative verdict still comes through the signed
+   webhook. Use client-side scores for UI feedback and diagnostics only.
 
 6. **Update your UI based on the client-side result.** Show the user an
    appropriate message. This result is for UI feedback only.
@@ -131,7 +176,154 @@ Sessions expire after **15 minutes** if not completed.
 
 ---
 
-## 2. Sequence Diagram
+## 3. Auth Architecture
+
+All SDK communication flows through the Cloudflare Worker proxy at
+`api.usesense.ai`. The SDK never communicates directly with the Supabase
+backend, and integrators never need Supabase URLs or gateway keys.
+
+### How It Works
+
+1. **Session creation.** The SDK sends a request with an `x-api-key` header
+   (your publishable API key, `pk_live_...`). The Cloudflare Worker at
+   `api.usesense.ai` validates the key and injects the Supabase gateway
+   headers server-side before forwarding the request to the backend.
+
+2. **Capture flow.** After a session is created, all subsequent requests
+   (frame upload, verdict request, etc.) carry an `x-session-token` header.
+   The Worker validates the session token and injects backend credentials
+   server-side.
+
+3. **No Supabase credentials on the client.** Your app ships with only the
+   publishable API key (`pk_live_...`). The Worker handles all backend
+   authentication. There is no `gatewayKey`, Supabase URL, or service-role
+   key in your configuration.
+
+```
+  Mobile App                 Cloudflare Worker               Supabase Backend
+      |                      (api.usesense.ai)                      |
+      |--- x-api-key ---------> |                                   |
+      |                         |--- x-api-key + gateway headers -->|
+      |                         |<-- session_token ------------------|
+      |<-- session_token -------|                                   |
+      |                         |                                   |
+      |--- x-session-token ---->|                                   |
+      |                         |--- session-token + gw headers --->|
+      |                         |<-- response ----------------------|
+      |<-- response ------------|                                   |
+```
+
+### Configuration
+
+You only need a publishable API key. The base URL defaults to
+`api.usesense.ai` and should not be overridden in production.
+
+```dart
+final useSense = UseSenseFlutter();
+await useSense.initialize(
+  const UseSenseConfig(apiKey: 'pk_live_your_key'),
+);
+```
+
+Do NOT include any `gatewayKey`, `supabaseUrl`, or similar fields in your
+configuration. These are not accepted by the v4.1 SDK and will cause an
+`invalidConfig` error.
+
+---
+
+## 4. Server-Side Init (Token Exchange)
+
+The server-side init flow enables your backend to create a short-lived
+client token that the mobile SDK exchanges for a full session. This is
+required for reference image matching and recommended for any flow where
+you want zero credential exposure on the mobile device.
+
+### When to Use
+
+- **Reference image matching.** Your backend attaches a reference photo
+  (e.g., from an ID document) to the session at creation time. The mobile
+  SDK cannot do this directly because it would require a secret key.
+- **Zero-credential mobile deployments.** The mobile app receives only a
+  single-use, short-lived token -- not even the publishable API key.
+- **Backend-controlled session parameters.** Your backend sets session type,
+  external user ID, and any custom metadata before the SDK starts.
+
+### Two-Phase Flow
+
+**Phase 1: Backend creates a client token.**
+
+Your backend calls the UseSense Server API with your secret key:
+
+```
+POST https://api.usesense.ai/v1/sessions/create-token
+Authorization: Bearer sk_live_your_secret_key
+Content-Type: application/json
+
+{
+  "session_type": "enrollment",
+  "external_user_id": "user-123",
+  "reference_image_url": "https://your-bucket.s3.amazonaws.com/id-photo.jpg"
+}
+```
+
+Response:
+
+```json
+{
+  "client_token": "ctok_abc123...",
+  "expires_at": "2026-04-06T12:15:00Z"
+}
+```
+
+The `client_token` is short-lived (typically 5 minutes) and single-use.
+Your backend sends it to the mobile app over your existing authenticated
+channel (REST API, WebSocket, etc.).
+
+**Phase 2: SDK exchanges the token.**
+
+The mobile app calls `startVerificationWithToken()` instead of
+`startVerification()`:
+
+```dart
+final result = await useSense.startVerificationWithToken(clientToken);
+```
+
+The SDK sends the client token to `api.usesense.ai`, which exchanges it
+for a full session token and proceeds with the capture flow. The mobile
+app never sees the secret key or the reference image URL.
+
+### Sequence Diagram (Server-Side Init)
+
+```
+  Your Backend            Mobile App            Cloudflare Worker         UseSense API
+       |                      |                       |                       |
+  [1]  |-- POST /v1/sessions/create-token ----------->|                       |
+       |   (sk_live_... + session params)              |--- create session --->|
+       |                                               |<-- client_token ------|
+       |<-- { client_token, expires_at } --------------|                       |
+       |                      |                        |                       |
+  [2]  |-- client_token ----->|                        |                       |
+       |   (your own API)     |                        |                       |
+       |                      |-- startVerificationWithToken(ctok_...) ------->|
+       |                      |                        |--- exchange token --->|
+       |                      |                        |<-- session_token -----|
+       |                      |<-- session started ----|                       |
+       |                      |                        |                       |
+       |                      |   [Normal capture flow continues]              |
+```
+
+### Error Handling for Token Exchange
+
+| Error Code          | Description                                       | Action                        |
+|---------------------|---------------------------------------------------|-------------------------------|
+| `token_expired`     | The client token has expired (past `expires_at`)  | Request a new token from backend |
+| `token_already_used`| The client token has already been exchanged        | Request a new token from backend |
+| `nonce_mismatch`    | Token nonce does not match the expected value      | Indicates replay attempt; reject |
+| `invalid_token`     | Token format is invalid or tampered with           | Request a new token from backend |
+
+---
+
+## 5. Sequence Diagram
 
 ```
  Your Flutter App          usesense_flutter           UseSense API            Your Backend
@@ -191,7 +383,7 @@ Key points in this flow:
 
 ---
 
-## 3. Why Three Independent Pillars?
+## 6. Why Three Independent Pillars?
 
 UseSense evaluates every session across three independent pillars. Each
 pillar produces its own score (0--100), and all three must pass for the

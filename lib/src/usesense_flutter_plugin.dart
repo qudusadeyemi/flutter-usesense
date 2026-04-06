@@ -87,6 +87,20 @@ class UseSenseFlutter {
     return _platform.startVerification(request);
   }
 
+  /// Start a verification session using a client token from server-side init.
+  ///
+  /// The integrator's backend calls `POST /v1/sessions/create-token` to obtain
+  /// a `client_token`, then passes it to the app. The SDK exchanges it via
+  /// `POST /v1/sessions/exchange-token` and proceeds with the normal capture
+  /// flow.
+  ///
+  /// Use this for reference image matching (KYC/ID verification) or
+  /// zero-credential-exposure flows where the real session credentials never
+  /// touch the integrator's backend.
+  Future<UseSenseResult> startVerificationWithToken(String clientToken) {
+    return _platform.startVerificationWithToken(clientToken);
+  }
+
   /// Start a remote enrollment flow using a pre-created [remoteEnrollmentId].
   ///
   /// The enrollment ID should be obtained from your backend via the UseSense

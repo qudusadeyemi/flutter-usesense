@@ -47,6 +47,12 @@ enum PigeonEventType {
   decisionReceived,
   imageQualityCheck,
   error,
+  // v4.1 events
+  stepUpTriggered,
+  stepUpCompleted,
+  faceGuideReady,
+  countdownStarted,
+  geometricCoherenceCompleted,
 }
 
 // ---------------------------------------------------------------------------
@@ -78,7 +84,6 @@ class PigeonUseSenseConfig {
     required this.apiKey,
     this.environment = PigeonUseSenseEnvironment.auto,
     this.baseUrl,
-    this.gatewayKey,
     this.branding,
     this.googleCloudProjectNumber,
   });
@@ -86,7 +91,6 @@ class PigeonUseSenseConfig {
   String apiKey;
   PigeonUseSenseEnvironment environment;
   String? baseUrl;
-  String? gatewayKey;
   PigeonBrandingConfig? branding;
   int? googleCloudProjectNumber;
 }
@@ -106,6 +110,13 @@ class PigeonVerificationRequest {
   Map<String, String>? metadata;
 }
 
+/// Request for server-side init token exchange flow.
+class PigeonTokenExchangeRequest {
+  PigeonTokenExchangeRequest({required this.clientToken});
+
+  String clientToken;
+}
+
 /// The outcome of a completed verification session.
 class PigeonUseSenseResult {
   PigeonUseSenseResult({
@@ -114,6 +125,14 @@ class PigeonUseSenseResult {
     this.identityId,
     required this.decision,
     required this.timestamp,
+    this.channelTrustScore,
+    this.livenessScore,
+    this.dedupeRiskScore,
+    this.channelTrustVerdict,
+    this.livenessVerdict,
+    this.dedupeVerdict,
+    this.stepUpTriggered,
+    this.stepUpPassed,
   });
 
   String sessionId;
@@ -121,6 +140,20 @@ class PigeonUseSenseResult {
   String? identityId;
   String decision;
   String timestamp;
+
+  // v4.1: pillar scores (0-100)
+  int? channelTrustScore;
+  int? livenessScore;
+  int? dedupeRiskScore;
+
+  // v4.1: per-pillar verdicts ("PASS" | "FAIL" | "REVIEW")
+  String? channelTrustVerdict;
+  String? livenessVerdict;
+  String? dedupeVerdict;
+
+  // v4.1: inline step-up status
+  bool? stepUpTriggered;
+  bool? stepUpPassed;
 }
 
 /// An event emitted during a verification session.
@@ -174,6 +207,16 @@ abstract class UseSenseHostApi {
   /// if the session fails or is cancelled.
   @async
   PigeonUseSenseResult startVerification(PigeonVerificationRequest request);
+
+  /// Start a verification session using a client token from server-side init.
+  ///
+  /// The integrator's backend calls POST /v1/sessions/create-token to get
+  /// a client_token, then passes it to the SDK. The native SDK exchanges it
+  /// via POST /v1/sessions/exchange-token and proceeds with normal capture.
+  @async
+  PigeonUseSenseResult startVerificationWithToken(
+    PigeonTokenExchangeRequest request,
+  );
 
   /// Start a remote enrollment flow using a pre-created enrollment ID.
   @async

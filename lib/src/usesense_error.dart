@@ -41,11 +41,26 @@ class UseSenseError implements Exception {
   /// Network request timed out.
   static const int networkTimeout = 2002;
 
+  /// Rate limited by the server (429).
+  static const int rateLimited = 2003;
+
   /// Session has expired.
   static const int sessionExpired = 3001;
 
   /// Frame/data upload failed.
   static const int uploadFailed = 3002;
+
+  /// Nonce validation failed.
+  static const int nonceMismatch = 3003;
+
+  /// Client token has expired (past 10-minute TTL).
+  static const int tokenExpired = 3004;
+
+  /// Client token was already exchanged.
+  static const int tokenAlreadyUsed = 3005;
+
+  /// Client token is invalid or does not exist.
+  static const int tokenNotFound = 3006;
 
   /// Frame capture failed.
   static const int captureFailed = 4001;
@@ -58,6 +73,9 @@ class UseSenseError implements Exception {
 
   /// Organization quota exceeded.
   static const int quotaExceeded = 6001;
+
+  /// Organization out of verification credits.
+  static const int insufficientCredits = 6002;
 
   /// SDK not initialized.
   static const int sdkNotInitialized = 7001;
@@ -93,10 +111,20 @@ class UseSenseError implements Exception {
         return networkError;
       case 'network_timeout':
         return networkTimeout;
+      case 'rate_limited':
+        return rateLimited;
       case 'session_expired':
         return sessionExpired;
       case 'upload_failed':
         return uploadFailed;
+      case 'nonce_mismatch':
+        return nonceMismatch;
+      case 'token_expired':
+        return tokenExpired;
+      case 'token_already_used':
+        return tokenAlreadyUsed;
+      case 'token_not_found':
+        return tokenNotFound;
       case 'capture_failed':
         return captureFailed;
       case 'encoding_failed':
@@ -105,6 +133,8 @@ class UseSenseError implements Exception {
         return invalidConfig;
       case 'quota_exceeded':
         return quotaExceeded;
+      case 'insufficient_credits':
+        return insufficientCredits;
       case 'sdk_not_initialized':
         return sdkNotInitialized;
       case 'session_cancelled':

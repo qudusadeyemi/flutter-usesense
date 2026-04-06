@@ -38,7 +38,7 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
         if let b = config.branding {
             brandingConfig = BrandingConfig(
                 logoUrl: b.logoUrl,
-                primaryColor: b.primaryColor ?? "#4F63F5",
+                primaryColor: b.primaryColor ?? "#4F7CFF",
                 buttonRadius: CGFloat(b.buttonRadius ?? 12),
                 fontFamily: b.fontFamily
             )
@@ -46,7 +46,6 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
 
         let sdkConfig = UseSenseConfig(
             apiKey: config.apiKey,
-            gatewayKey: config.gatewayKey ?? UseSenseConfig.defaultGatewayKey,
             environment: environment,
             branding: brandingConfig
         )
@@ -107,14 +106,67 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
                 rootVC.dismiss(animated: true)
                 switch result {
                 case .success(let decision):
-                    let pigeonResult = PigeonUseSenseResult(
+                    completion(.success(self?.mapDecisionToPigeon(decision) ?? PigeonUseSenseResult(
                         sessionId: decision.sessionId,
-                        sessionType: decision.sessionType,
-                        identityId: decision.identityId,
                         decision: decision.decision,
                         timestamp: decision.timestamp
-                    )
-                    completion(.success(pigeonResult))
+                    )))
+                case .failure(let error):
+                    if error.code == .userCancelled {
+                        self?.flutterApi?.onCancelled { _ in }
+                        completion(.failure(PigeonError(
+                            code: "session_cancelled",
+                            message: "User cancelled the verification session.",
+                            details: nil
+                        )))
+                    } else {
+                        completion(.failure(self?.mapError(error) ?? PigeonError(
+                            code: "sdk_error",
+                            message: error.localizedDescription,
+                            details: nil
+                        )))
+                    }
+                }
+            }
+        }
+
+        vc.modalPresentationStyle = .fullScreen
+        rootVC.present(vc, animated: true)
+    }
+
+    func startVerificationWithToken(request: PigeonTokenExchangeRequest, completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void) {
+        guard let client = client else {
+            completion(.failure(PigeonError(
+                code: "sdk_not_initialized",
+                message: "UseSense SDK is not initialized. Call initialize() first.",
+                details: nil
+            )))
+            return
+        }
+
+        guard let rootVC = UIApplication.shared.delegate?.window??.rootViewController else {
+            completion(.failure(PigeonError(
+                code: "sdk_not_initialized",
+                message: "Root view controller is not available.",
+                details: nil
+            )))
+            return
+        }
+
+        // The native SDK exchanges the client token for a full session,
+        // then proceeds with the normal camera capture flow.
+        let session = client.startVerificationWithToken(clientToken: request.clientToken)
+
+        let vc = UseSenseViewController(session: session) { [weak self] result in
+            DispatchQueue.main.async {
+                rootVC.dismiss(animated: true)
+                switch result {
+                case .success(let decision):
+                    completion(.success(self?.mapDecisionToPigeon(decision) ?? PigeonUseSenseResult(
+                        sessionId: decision.sessionId,
+                        decision: decision.decision,
+                        timestamp: decision.timestamp
+                    )))
                 case .failure(let error):
                     if error.code == .userCancelled {
                         self?.flutterApi?.onCancelled { _ in }
@@ -249,6 +301,24 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
 
     // MARK: - Private helpers
 
+    private func mapDecisionToPigeon(_ decision: UseSenseDecision) -> PigeonUseSenseResult {
+        return PigeonUseSenseResult(
+            sessionId: decision.sessionId,
+            sessionType: decision.sessionType,
+            identityId: decision.identityId,
+            decision: decision.decision,
+            timestamp: decision.timestamp,
+            channelTrustScore: decision.channelTrustScore.map { Int64($0) },
+            livenessScore: decision.livenessScore.map { Int64($0) },
+            dedupeRiskScore: decision.dedupeRiskScore.map { Int64($0) },
+            channelTrustVerdict: decision.pillarVerdicts?.channelTrust,
+            livenessVerdict: decision.pillarVerdicts?.liveness,
+            dedupeVerdict: decision.pillarVerdicts?.dedupe,
+            stepUpTriggered: decision.inlineStepUp?.triggered,
+            stepUpPassed: decision.inlineStepUp?.passed
+        )
+    }
+
     private func forwardEvent(_ event: UseSenseEvent) {
         let pigeonType: PigeonEventType
         switch event.type {
@@ -270,6 +340,11 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
         case .decisionReceived: pigeonType = .decisionReceived
         case .imageQualityCheck: pigeonType = .imageQualityCheck
         case .error: pigeonType = .error
+        case .stepUpTriggered: pigeonType = .stepUpTriggered
+        case .stepUpCompleted: pigeonType = .stepUpCompleted
+        case .faceGuideReady: pigeonType = .faceGuideReady
+        case .countdownStarted: pigeonType = .countdownStarted
+        case .geometricCoherenceCompleted: pigeonType = .geometricCoherenceCompleted
         @unknown default: pigeonType = .error
         }
 
@@ -292,12 +367,18 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
         case .micPermissionDenied: code = "microphone_permission_denied"
         case .networkError: code = "network_error"
         case .networkTimeout: code = "network_timeout"
+        case .rateLimited: code = "rate_limited"
         case .sessionExpired: code = "session_expired"
         case .uploadFailed: code = "upload_failed"
+        case .nonceMismatch: code = "nonce_mismatch"
+        case .tokenExpired: code = "token_expired"
+        case .tokenAlreadyUsed: code = "token_already_used"
+        case .tokenNotFound: code = "token_not_found"
         case .captureFailed: code = "capture_failed"
         case .encodingFailed: code = "encoding_failed"
         case .invalidConfig: code = "invalid_config"
         case .quotaExceeded: code = "quota_exceeded"
+        case .insufficientCredits: code = "insufficient_credits"
         case .userCancelled: code = "session_cancelled"
         case .unauthorized: code = "unauthorized"
         case .invalidToken: code = "invalid_token"

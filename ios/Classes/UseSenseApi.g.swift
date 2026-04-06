@@ -15,6 +15,7 @@ import FlutterMacOS
 protocol UseSenseHostApi {
   func initialize(config: PigeonUseSenseConfig, completion: @escaping (Result<Void, Error>) -> Void)
   func startVerification(request: PigeonVerificationRequest, completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void)
+  func startVerificationWithToken(request: PigeonTokenExchangeRequest, completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void)
   func startRemoteEnrollment(remoteEnrollmentId: String, completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void)
   func startRemoteVerification(remoteSessionId: String, completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void)
   func isInitialized() throws -> Bool
@@ -102,6 +103,11 @@ enum PigeonEventType: Int {
   case decisionReceived = 15
   case imageQualityCheck = 16
   case error = 17
+  case stepUpTriggered = 18
+  case stepUpCompleted = 19
+  case faceGuideReady = 20
+  case countdownStarted = 21
+  case geometricCoherenceCompleted = 22
 }
 
 // ---------------------------------------------------------------------------
@@ -136,25 +142,23 @@ struct PigeonUseSenseConfig {
   var apiKey: String
   var environment: PigeonUseSenseEnvironment
   var baseUrl: String?
-  var gatewayKey: String?
   var branding: PigeonBrandingConfig?
   var googleCloudProjectNumber: Int64?
 
   func toList() -> [Any?] {
-    return [apiKey, environment.rawValue, baseUrl, gatewayKey, branding?.toList(), googleCloudProjectNumber]
+    return [apiKey, environment.rawValue, baseUrl, branding?.toList(), googleCloudProjectNumber]
   }
 
   static func fromList(_ pigeonVar_list: [Any?]) -> PigeonUseSenseConfig {
-    let branding: PigeonBrandingConfig? = nilOrValue(pigeonVar_list[4]) != nil
-      ? PigeonBrandingConfig.fromList(pigeonVar_list[4] as! [Any?])
+    let branding: PigeonBrandingConfig? = nilOrValue(pigeonVar_list[3]) != nil
+      ? PigeonBrandingConfig.fromList(pigeonVar_list[3] as! [Any?])
       : nil
     return PigeonUseSenseConfig(
       apiKey: pigeonVar_list[0] as! String,
       environment: PigeonUseSenseEnvironment(rawValue: pigeonVar_list[1] as! Int)!,
       baseUrl: nilOrValue(pigeonVar_list[2]),
-      gatewayKey: nilOrValue(pigeonVar_list[3]),
       branding: branding,
-      googleCloudProjectNumber: nilOrValue(pigeonVar_list[5])
+      googleCloudProjectNumber: nilOrValue(pigeonVar_list[4])
     )
   }
 }
@@ -179,15 +183,37 @@ struct PigeonVerificationRequest {
   }
 }
 
+struct PigeonTokenExchangeRequest {
+  var clientToken: String
+
+  func toList() -> [Any?] {
+    return [clientToken]
+  }
+
+  static func fromList(_ pigeonVar_list: [Any?]) -> PigeonTokenExchangeRequest {
+    return PigeonTokenExchangeRequest(
+      clientToken: pigeonVar_list[0] as! String
+    )
+  }
+}
+
 struct PigeonUseSenseResult {
   var sessionId: String
   var sessionType: String?
   var identityId: String?
   var decision: String
   var timestamp: String
+  var channelTrustScore: Int64?
+  var livenessScore: Int64?
+  var dedupeRiskScore: Int64?
+  var channelTrustVerdict: String?
+  var livenessVerdict: String?
+  var dedupeVerdict: String?
+  var stepUpTriggered: Bool?
+  var stepUpPassed: Bool?
 
   func toList() -> [Any?] {
-    return [sessionId, sessionType, identityId, decision, timestamp]
+    return [sessionId, sessionType, identityId, decision, timestamp, channelTrustScore, livenessScore, dedupeRiskScore, channelTrustVerdict, livenessVerdict, dedupeVerdict, stepUpTriggered, stepUpPassed]
   }
 
   static func fromList(_ pigeonVar_list: [Any?]) -> PigeonUseSenseResult {
@@ -196,7 +222,15 @@ struct PigeonUseSenseResult {
       sessionType: nilOrValue(pigeonVar_list[1]),
       identityId: nilOrValue(pigeonVar_list[2]),
       decision: pigeonVar_list[3] as! String,
-      timestamp: pigeonVar_list[4] as! String
+      timestamp: pigeonVar_list[4] as! String,
+      channelTrustScore: nilOrValue(pigeonVar_list[5]),
+      livenessScore: nilOrValue(pigeonVar_list[6]),
+      dedupeRiskScore: nilOrValue(pigeonVar_list[7]),
+      channelTrustVerdict: nilOrValue(pigeonVar_list[8]),
+      livenessVerdict: nilOrValue(pigeonVar_list[9]),
+      dedupeVerdict: nilOrValue(pigeonVar_list[10]),
+      stepUpTriggered: nilOrValue(pigeonVar_list[11]),
+      stepUpPassed: nilOrValue(pigeonVar_list[12])
     )
   }
 }
@@ -268,6 +302,7 @@ private class UseSensePigeonCodecReader: FlutterStandardReader {
     case 132: return PigeonUseSenseResult.fromList(readValue() as! [Any?])
     case 133: return PigeonUseSenseEvent.fromList(readValue() as! [Any?])
     case 134: return PigeonUseSenseError.fromList(readValue() as! [Any?])
+    case 135: return PigeonTokenExchangeRequest.fromList(readValue() as! [Any?])
     default: return super.readValue(ofType: type)
     }
   }
@@ -292,6 +327,9 @@ private class UseSensePigeonCodecWriter: FlutterStandardWriter {
       writeValue(v.toList())
     } else if let v = value as? PigeonUseSenseError {
       writeByte(134)
+      writeValue(v.toList())
+    } else if let v = value as? PigeonTokenExchangeRequest {
+      writeByte(135)
       writeValue(v.toList())
     } else {
       super.writeValue(value)
@@ -388,6 +426,28 @@ func UseSenseHostApiSetup(_ binaryMessenger: FlutterBinaryMessenger, _ api: UseS
     }
   } else {
     startVerificationChannel.setMessageHandler(nil)
+  }
+
+  let startVerificationWithTokenChannel = FlutterBasicMessageChannel(
+    name: "dev.flutter.pigeon.usesense_flutter.UseSenseHostApi.startVerificationWithToken\(suffix)",
+    binaryMessenger: binaryMessenger,
+    codec: codec
+  )
+  if let api = api {
+    startVerificationWithTokenChannel.setMessageHandler { message, reply in
+      let args = message as! [Any?]
+      let requestArg = args[0] as! PigeonTokenExchangeRequest
+      api.startVerificationWithToken(request: requestArg) { result in
+        switch result {
+        case .success(let res):
+          reply(wrapResult(res.toList()))
+        case .failure(let error):
+          reply(wrapError(error))
+        }
+      }
+    }
+  } else {
+    startVerificationWithTokenChannel.setMessageHandler(nil)
   }
 
   let startRemoteEnrollmentChannel = FlutterBasicMessageChannel(

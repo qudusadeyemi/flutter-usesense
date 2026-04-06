@@ -44,6 +44,11 @@ enum PigeonEventType {
   decisionReceived,
   imageQualityCheck,
   error,
+  stepUpTriggered,
+  stepUpCompleted,
+  faceGuideReady,
+  countdownStarted,
+  geometricCoherenceCompleted,
 }
 
 /// Branding configuration for the SDK UI.
@@ -94,7 +99,6 @@ class PigeonUseSenseConfig {
     required this.apiKey,
     this.environment = PigeonUseSenseEnvironment.auto,
     this.baseUrl,
-    this.gatewayKey,
     this.branding,
     this.googleCloudProjectNumber,
   });
@@ -102,7 +106,6 @@ class PigeonUseSenseConfig {
   String apiKey;
   PigeonUseSenseEnvironment environment;
   String? baseUrl;
-  String? gatewayKey;
   PigeonBrandingConfig? branding;
   int? googleCloudProjectNumber;
 
@@ -111,7 +114,6 @@ class PigeonUseSenseConfig {
       apiKey,
       environment.index,
       baseUrl,
-      gatewayKey,
       branding?.encode(),
       googleCloudProjectNumber,
     ];
@@ -123,11 +125,10 @@ class PigeonUseSenseConfig {
       apiKey: result[0]! as String,
       environment: PigeonUseSenseEnvironment.values[result[1]! as int],
       baseUrl: result[2] as String?,
-      gatewayKey: result[3] as String?,
-      branding: result[4] != null
-          ? PigeonBrandingConfig.decode(result[4]! as List<Object?>)
+      branding: result[3] != null
+          ? PigeonBrandingConfig.decode(result[3]! as List<Object?>)
           : null,
-      googleCloudProjectNumber: result[5] as int?,
+      googleCloudProjectNumber: result[4] as int?,
     );
   }
 }
@@ -166,6 +167,28 @@ class PigeonVerificationRequest {
   }
 }
 
+/// Request to start a verification session using a pre-exchanged token.
+class PigeonTokenExchangeRequest {
+  PigeonTokenExchangeRequest({
+    required this.clientToken,
+  });
+
+  String clientToken;
+
+  Object encode() {
+    return <Object?>[
+      clientToken,
+    ];
+  }
+
+  static PigeonTokenExchangeRequest decode(Object result) {
+    result as List<Object?>;
+    return PigeonTokenExchangeRequest(
+      clientToken: result[0]! as String,
+    );
+  }
+}
+
 /// The outcome of a completed verification session.
 class PigeonUseSenseResult {
   PigeonUseSenseResult({
@@ -174,6 +197,14 @@ class PigeonUseSenseResult {
     this.identityId,
     required this.decision,
     required this.timestamp,
+    this.channelTrustScore,
+    this.livenessScore,
+    this.dedupeRiskScore,
+    this.channelTrustVerdict,
+    this.livenessVerdict,
+    this.dedupeVerdict,
+    this.stepUpTriggered,
+    this.stepUpPassed,
   });
 
   String sessionId;
@@ -181,6 +212,14 @@ class PigeonUseSenseResult {
   String? identityId;
   String decision;
   String timestamp;
+  int? channelTrustScore;
+  int? livenessScore;
+  int? dedupeRiskScore;
+  String? channelTrustVerdict;
+  String? livenessVerdict;
+  String? dedupeVerdict;
+  bool? stepUpTriggered;
+  bool? stepUpPassed;
 
   Object encode() {
     return <Object?>[
@@ -189,6 +228,14 @@ class PigeonUseSenseResult {
       identityId,
       decision,
       timestamp,
+      channelTrustScore,
+      livenessScore,
+      dedupeRiskScore,
+      channelTrustVerdict,
+      livenessVerdict,
+      dedupeVerdict,
+      stepUpTriggered,
+      stepUpPassed,
     ];
   }
 
@@ -200,6 +247,14 @@ class PigeonUseSenseResult {
       identityId: result[2] as String?,
       decision: result[3]! as String,
       timestamp: result[4]! as String,
+      channelTrustScore: result[5] as int?,
+      livenessScore: result[6] as int?,
+      dedupeRiskScore: result[7] as int?,
+      channelTrustVerdict: result[8] as String?,
+      livenessVerdict: result[9] as String?,
+      dedupeVerdict: result[10] as String?,
+      stepUpTriggered: result[11] as bool?,
+      stepUpPassed: result[12] as bool?,
     );
   }
 }
@@ -295,6 +350,9 @@ class _PigeonCodec extends StandardMessageCodec {
     } else if (value is PigeonUseSenseError) {
       buffer.putUint8(134);
       writeValue(buffer, value.encode());
+    } else if (value is PigeonTokenExchangeRequest) {
+      buffer.putUint8(135);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -315,6 +373,8 @@ class _PigeonCodec extends StandardMessageCodec {
         return PigeonUseSenseEvent.decode(readValue(buffer)!);
       case 134:
         return PigeonUseSenseError.decode(readValue(buffer)!);
+      case 135:
+        return PigeonTokenExchangeRequest.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -366,6 +426,37 @@ class UseSenseHostApi {
       PigeonVerificationRequest request) async {
     final String pigeonVar_channelName =
         'dev.flutter.pigeon.usesense_flutter.UseSenseHostApi.startVerification$pigeonVar_messageChannelSuffix';
+    final BasicMessageChannel<Object?> pigeonVar_channel =
+        BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final List<Object?>? pigeonVar_replyList =
+        await pigeonVar_channel.send(<Object?>[request]) as List<Object?>?;
+    if (pigeonVar_replyList == null) {
+      throw _createConnectionError(pigeonVar_channelName);
+    } else if (pigeonVar_replyList.length > 1) {
+      throw PlatformException(
+        code: pigeonVar_replyList[0]! as String,
+        message: pigeonVar_replyList[1] as String?,
+        details: pigeonVar_replyList[2],
+      );
+    } else if (pigeonVar_replyList[0] == null) {
+      throw PlatformException(
+        code: 'null-error',
+        message: 'Host platform returned null value for non-null return value.',
+      );
+    } else {
+      return (pigeonVar_replyList[0] as PigeonUseSenseResult?)!;
+    }
+  }
+
+  /// Start a verification session using a pre-exchanged client token.
+  Future<PigeonUseSenseResult> startVerificationWithToken(
+      PigeonTokenExchangeRequest request) async {
+    final String pigeonVar_channelName =
+        'dev.flutter.pigeon.usesense_flutter.UseSenseHostApi.startVerificationWithToken$pigeonVar_messageChannelSuffix';
     final BasicMessageChannel<Object?> pigeonVar_channel =
         BasicMessageChannel<Object?>(
       pigeonVar_channelName,
