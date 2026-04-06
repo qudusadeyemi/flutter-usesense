@@ -165,7 +165,7 @@ class ResultScreen extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.security,
                     color: UseSenseColors.blue7,
                     size: 20,
@@ -326,7 +326,7 @@ class _DetailRow extends StatelessWidget {
                   SnackBar(content: Text('$label copied')),
                 );
               },
-              child: Icon(
+              child: const Icon(
                 Icons.copy,
                 size: 16,
                 color: UseSenseColors.neutral4,

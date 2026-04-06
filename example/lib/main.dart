@@ -86,7 +86,7 @@ class _UseSenseExampleAppState extends State<UseSenseExampleApp> {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
-            side: BorderSide(color: UseSenseColors.neutral2),
+            side: const BorderSide(color: UseSenseColors.neutral2),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
@@ -112,7 +112,7 @@ class _UseSenseExampleAppState extends State<UseSenseExampleApp> {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
-            side: BorderSide(color: UseSenseColors.neutral6),
+            side: const BorderSide(color: UseSenseColors.neutral6),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
