@@ -458,9 +458,74 @@ No pillar's score can mask a failure in another. This is by design.
 
 ---
 
-## 4. Flutter-Specific Considerations
+## 7. Pillar Scores in UseSenseResult
 
-### 4.1 Navigation
+As of v4.1.0, `UseSenseResult` includes individual pillar scores, per-pillar
+verdicts, and inline step-up status. These are available immediately when the
+`Future<UseSenseResult>` resolves, before the webhook arrives.
+
+### PillarScores
+
+| Field                  | Type    | Description                                    |
+|------------------------|---------|------------------------------------------------|
+| `channelTrustScore`    | `int?`  | DeepSense score (0--100). Device/channel integrity. |
+| `livenessScore`        | `int?`  | LiveSense score (0--100). Proof of life.       |
+| `matchScore`           | `int?`  | MatchSense score (0--100). Face match/dedup.   |
+| `presenceConfidence`   | `int?`  | Fused score (0--100). Drives the decision.     |
+
+### PillarVerdicts
+
+| Field                  | Type      | Description                                  |
+|------------------------|-----------|----------------------------------------------|
+| `channelTrustVerdict`  | `String?` | `pass` or `fail` for DeepSense.              |
+| `livenessVerdict`      | `String?` | `pass` or `fail` for LiveSense.              |
+| `matchVerdict`         | `String?` | `pass` or `fail` for MatchSense.             |
+
+### StepUpStatus
+
+| Field                  | Type      | Description                                  |
+|------------------------|-----------|----------------------------------------------|
+| `triggered`            | `bool`    | Whether inline step-up was triggered.        |
+| `modules`              | `List<String>?` | Which step-up modules ran (e.g., `flash_reflection`, `rmas`). |
+| `passed`               | `bool?`   | Whether the step-up challenge was passed.    |
+
+### Example Usage
+
+```dart
+final result = await useSense.startVerification(request);
+
+// Pillar scores (for UI diagnostics only)
+final scores = result.pillarScores;
+if (scores != null) {
+  debugPrint('Channel Trust: ${scores.channelTrustScore}');
+  debugPrint('Liveness: ${scores.livenessScore}');
+  debugPrint('Match: ${scores.matchScore}');
+  debugPrint('Fused: ${scores.presenceConfidence}');
+}
+
+// Per-pillar verdicts
+final verdicts = result.pillarVerdicts;
+if (verdicts != null) {
+  debugPrint('Liveness: ${verdicts.livenessVerdict}');
+}
+
+// Inline step-up status
+final stepUp = result.stepUpStatus;
+if (stepUp != null && stepUp.triggered) {
+  debugPrint('Step-up modules: ${stepUp.modules}');
+  debugPrint('Step-up passed: ${stepUp.passed}');
+}
+```
+
+> **Reminder:** Client-side scores are for UI feedback and diagnostics only.
+> The definitive verdict comes through the signed webhook. Never make
+> access-control decisions based on `UseSenseResult` alone.
+
+---
+
+## 8. Flutter-Specific Considerations
+
+### 8.1 Navigation
 
 When `startVerification()` is called, the native SDK presents a full-screen
 camera UI as a native Activity (Android) or UIViewController (iOS) **over**
@@ -494,7 +559,7 @@ ElevatedButton(
 )
 ```
 
-### 4.2 State Management
+### 8.2 State Management
 
 The plugin is a plain Dart class with `Future`-based methods and `Stream`
 properties. It integrates naturally with any state management approach.
@@ -730,7 +795,7 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
 See the [example app](example/lib/main.dart) for a complete `setState`
 implementation.
 
-### 4.3 Platform Lifecycle
+### 8.3 Platform Lifecycle
 
 #### iOS
 
@@ -754,7 +819,7 @@ If you use the `onEvent` stream, be aware that some events may be missed if
 the Flutter Activity is destroyed and recreated mid-session. The final
 result is always delivered reliably.
 
-### 4.4 Permissions
+### 8.4 Permissions
 
 The native SDKs handle camera and microphone permission requests at runtime.
 You do not need to request permissions yourself before calling
@@ -790,7 +855,7 @@ been granted.
   `android.permission.RECORD_AUDIO` to your `AndroidManifest.xml`. The
   native SDK handles runtime permission requests via the Activity.
 
-### 4.5 Platform Channels (Pigeon)
+### 8.5 Platform Channels (Pigeon)
 
 The plugin uses [Pigeon](https://pub.dev/packages/pigeon) for platform
 channel communication. Pigeon generates type-safe Dart, Kotlin, and Swift
@@ -815,13 +880,13 @@ generated Pigeon types.
 
 ---
 
-## 5. Webhook Setup
+## 9. Webhook Setup
 
 The webhook is how your backend receives the definitive, signed verdict for
 each verification session. The SDK result on the client is for UI feedback
 only.
 
-### 5.1 Configure Your Webhook Endpoint
+### 9.1 Configure Your Webhook Endpoint
 
 1. Log in to the [UseSense Dashboard](https://dashboard.usesense.co).
 2. Navigate to **Settings > Webhooks**.
@@ -833,7 +898,7 @@ only.
    Secret** (`whsec_...`). Copy and store it securely in your backend
    environment variables. You will not be able to view it again.
 
-### 5.2 Webhook Payload Structure
+### 9.2 Webhook Payload Structure
 
 When a session completes, UseSense sends a `POST` request to your endpoint
 with the following JSON body:
@@ -876,7 +941,7 @@ with the following JSON body:
 | `data.rule_triggered`        | Custom rule that triggered, if any.                |
 | `data.session_signature`     | Session-level signature for additional validation. |
 
-### 5.3 Verifying the Webhook Signature
+### 9.3 Verifying the Webhook Signature
 
 Every webhook request includes an `X-UseSense-Signature` header containing
 an HMAC-SHA256 signature computed over the raw request body using your
@@ -1071,7 +1136,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### 5.4 Webhook Best Practices
+### 9.4 Webhook Best Practices
 
 - **Always verify the signature.** Never process an unverified payload.
 - **Respond with 2xx quickly.** Do heavy processing asynchronously.
@@ -1085,7 +1150,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 
 ---
 
-## 6. Going to Production Checklist
+## 10. Going to Production Checklist
 
 Complete every item before submitting your app to the App Store or
 Google Play.
