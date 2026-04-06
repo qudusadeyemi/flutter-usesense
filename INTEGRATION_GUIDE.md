@@ -19,6 +19,9 @@ a production application.
 8. [Flutter-Specific Considerations](#8-flutter-specific-considerations)
 9. [Webhook Setup](#9-webhook-setup)
 10. [Going to Production Checklist](#10-going-to-production-checklist)
+11. [Remote Flows](#remote-flows)
+12. [Error Handling Reference](#error-handling-reference)
+13. [Cleanup](#cleanup)
 
 ---
 
@@ -1177,7 +1180,7 @@ Google Play.
 
 - [ ] **5. Implement webhook signature verification.** Your backend must
   verify the HMAC-SHA256 signature on every webhook request (see
-  Section 5). Never process unverified payloads.
+  Section 9). Never process unverified payloads.
 
 - [ ] **6. Test on physical devices.** Verification sessions require a
   real camera. Test on at least one physical iOS device and one physical
@@ -1207,6 +1210,29 @@ Google Play.
   user-facing and accurately describe the purpose. For Android, if
   targeting API 31+, declare the `CAMERA` and `RECORD_AUDIO` permissions
   in your manifest with appropriate `usesPermissionFlags`.
+
+- [ ] **11. Verify `gatewayKey` is NOT in your config.** The v4.1 SDK does
+  not accept `gatewayKey`, `supabaseUrl`, or any direct Supabase
+  credentials. If these appear in your `UseSenseConfig`, the SDK will
+  throw an `invalidConfig` error. Remove them entirely.
+
+- [ ] **12. Verify base URL defaults to `api.usesense.ai`.** Do not override
+  the base URL in production. The SDK routes all traffic through the
+  Cloudflare Worker proxy at `api.usesense.ai`, which injects backend
+  credentials server-side.
+
+- [ ] **13. Test the server-side init flow if using reference image
+  matching.** If your use case requires reference image matching or
+  zero-credential mobile deployments, test the full two-phase token
+  exchange flow (see Section 4). Verify that `client_token` creation,
+  delivery to the mobile app, and `startVerificationWithToken()` all
+  work end-to-end.
+
+- [ ] **14. Handle new error codes.** v4.1 introduces error codes for the
+  token exchange flow: `token_expired`, `token_already_used`,
+  `nonce_mismatch`, and `invalid_token`. Ensure your error handling
+  covers these cases if you use server-side init. See the error table
+  in Section 4 for recommended actions.
 
 ---
 
