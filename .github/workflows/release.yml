@@ -6,20 +6,36 @@
 #
 # pub.dev authentication:
 #   pub.dev supports GitHub Actions OIDC as a first-class auth mechanism, so
-#   this workflow does NOT require any long-lived secret. The first publish
-#   still needs a one-time manual `dart pub publish` from a machine that has
-#   been authenticated with `dart pub token add https://pub.dev` to claim
-#   the package name — after that first publish, this workflow takes over.
+#   this workflow does NOT require any long-lived secret in the repository.
+#   The first publish still needs a one-time manual `dart pub publish` from
+#   a machine authenticated with `dart pub token add https://pub.dev` to
+#   claim the package name; after that first publish, this workflow takes
+#   over on every `v*` tag push.
 #
-#   To enable OIDC for a specific package on pub.dev:
-#     1. Go to https://pub.dev/packages/usesense_flutter/admin
-#     2. Under "Automated publishing", add this repository + workflow filter
-#        (repository: qudusadeyemi/flutter-usesense, tagPattern: v*)
-#     3. Save. Subsequent `v*` tag pushes will auto-publish.
+#   Two things must be in place for OIDC to work:
 #
-#   If OIDC hasn't been configured yet, the publish step below will fail
-#   with a clear "No credentials" error and the rest of the workflow
-#   (GitHub Release creation) will still run.
+#     1. pub.dev side: go to
+#        https://pub.dev/packages/usesense_flutter/admin
+#        → Automated publishing → Enable → fill in:
+#          • Repository: qudusadeyemi/flutter-usesense
+#          • Tag pattern: v{{version}}
+#        Both checkboxes (enable + require tag) must be ticked. If either
+#        is missing, pub.dev rejects the OIDC token and the publish step
+#        falls back to interactive OAuth (which will sit there forever
+#        because the runner has no browser).
+#
+#     2. Workflow side: `permissions: id-token: write` below, AND the
+#        `dart-lang/setup-dart@v1` step in the job, which wires up the
+#        OIDC credential plumbing. `subosito/flutter-action@v2`'s bundled
+#        Dart does NOT do this on its own — it goes straight to device-
+#        flow OAuth without that action. See the inline comment on the
+#        `Set up Dart` step below for the full mechanism.
+#
+#   Symptom of a broken OIDC setup: the publish step prints
+#     "Pub needs your authorization to upload packages on your behalf.
+#      In a web browser, go to https://accounts.google.com/o/oauth2/..."
+#   and then hangs until the runner's 6-hour timeout. If you see that,
+#   cancel the run and verify both sides above.
 
 name: Release
 
@@ -46,6 +62,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # dart-lang/setup-dart@v1 is the canonical way to wire up pub.dev
+      # OIDC publishing from GitHub Actions. It's maintained by the Dart
+      # team and installs a Dart SDK that knows how to:
+      #
+      #   1. Detect the `ACTIONS_ID_TOKEN_REQUEST_TOKEN` and
+      #      `ACTIONS_ID_TOKEN_REQUEST_URL` env vars that GitHub injects
+      #      when `id-token: write` is granted (we set that above).
+      #   2. Call GitHub's OIDC endpoint to mint a short-lived JWT with
+      #      audience `https://pub.dev`, signed by GitHub's key.
+      #   3. POST that JWT to pub.dev's trusted-publisher endpoint,
+      #      which validates it against the repo + tag-pattern filter
+      #      configured at
+      #      https://pub.dev/packages/usesense_flutter/admin.
+      #   4. Receive a temporary publish token from pub.dev and write
+      #      it to the dart pub credentials file so the subsequent
+      #      `dart pub publish` call finds it.
+      #
+      # Crucially, `subosito/flutter-action@v2`'s bundled Dart does NOT
+      # do any of this on its own — `dart pub publish` from Flutter's
+      # bundled Dart goes straight to interactive device-flow OAuth if
+      # no credentials file exists, which is exactly what broke the
+      # v2.0.1 release attempt. So this step must run BEFORE the
+      # Flutter setup step, so dart-lang/setup-dart's Dart is the one
+      # that sees the OIDC environment and writes the credentials file.
+      - name: Set up Dart (OIDC credential plumbing for pub.dev)
+        uses: dart-lang/setup-dart@v1
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
