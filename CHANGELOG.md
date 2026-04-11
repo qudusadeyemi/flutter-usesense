@@ -4,6 +4,19 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.0.1] - 2026-04-11
+
+**No-op release.** Bumps the package version with no code changes in
+order to validate the `release.yml` GitHub Actions workflow and the
+pub.dev OIDC publishing path end-to-end. The `2.0.0` release was
+published manually from a local `dart pub publish` because the
+OIDC pipeline wasn't wired up yet; this release flushes the same
+bits through the automated pipeline so subsequent releases can rely
+on tag-pushes as the single source of truth.
+
+No API, wire, or runtime behavior changes — `2.0.0` and `2.0.1` are
+binary- and source-compatible.
+
 ## [2.0.0] - 2026-04-11
 
 **Breaking release.** Combines the native-SDK / infrastructure /

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.usesense.flutter"
-version = "2.0.0"
+version = "2.0.1"
 
 android {
     namespace = "com.usesense.flutter"
