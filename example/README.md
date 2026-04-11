@@ -6,11 +6,17 @@ and error handling.
 ## Setup
 
 1. Clone this repository
-2. `cd usesense_flutter/example`
+2. `cd flutter-usesense/example`
 3. `flutter pub get`
-4. Replace the API key placeholder in `lib/main.dart` with your sandbox key from
-   [app.usesense.ai](https://app.usesense.ai)
-5. `flutter run` on a physical device (camera required)
+4. `flutter run` on a physical device (camera required)
+5. On first launch, paste your sandbox or production API key from
+   [watchtower.usesense.ai](https://watchtower.usesense.ai) into the **API Key**
+   field at the top of the app. The key is persisted via `shared_preferences`
+   and survives subsequent launches. No source editing required.
+6. Flip the **Production** toggle if you're using a production key
+   (`sk_prod_*`); leave it off for sandbox (`sk_sandbox_*`).
+7. Tap **Enroll** to run a first-time enrollment, or paste an existing
+   Identity ID and tap **Authenticate** to run an authentication session.
 
 ## What This Demonstrates
 

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.usesense.flutter"
-version = "1.0.0"
+version = "1.1.0"
 
 android {
     namespace = "com.usesense.flutter"
@@ -25,8 +25,12 @@ android {
 }
 
 dependencies {
-    // UseSense Android SDK
-    implementation("ai.usesense:sdk:1.0.0")
+    // UseSense Android SDK — published to Maven Central at
+    // central.sonatype.com/artifact/ai.usesense/sdk. Pinned to ^4.2.1
+    // because that's the first release with the centering fix for the
+    // terminal verification screens and the proper vanniktech-based
+    // publish artifact shape with sources + javadoc JARs.
+    implementation("ai.usesense:sdk:4.2.1")
 
     // Flutter embedding (provided by the Flutter build system)
     compileOnly("io.flutter:flutter_embedding_debug:1.0.0-")

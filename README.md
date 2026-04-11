@@ -67,14 +67,20 @@ cd ios && pod install
 
 ### Android Setup
 
-Add the UseSense Maven repository to your app-level `android/build.gradle.kts`:
+The native Android SDK is published to Maven Central at `ai.usesense:sdk`.
+`mavenCentral()` is already in every Android project's
+`android/build.gradle.kts` by default, so no custom repository
+declaration is required. The Flutter plugin pulls the native dep
+transitively when you run `flutter pub get`.
+
+If for some reason `mavenCentral()` has been removed from your
+`android/build.gradle.kts`, add it back:
 
 ```kotlin
 allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://maven.usesense.com/releases") }
     }
 }
 ```
@@ -671,4 +677,4 @@ MIT License. See [LICENSE](LICENSE) for details.
 - **Documentation:** [watchtower.usesense.ai/developer-docs](https://watchtower.usesense.ai/developer-docs)
 - **Dashboard:** [watchtower.usesense.ai](https://watchtower.usesense.ai)
 - **Email:** [support@usesense.ai](mailto:support@usesense.ai)
-- **Repository:** [github.com/usesense/usesense-flutter](https://github.com/usesense/usesense-flutter)
+- **Repository:** [github.com/qudusadeyemi/flutter-usesense](https://github.com/qudusadeyemi/flutter-usesense)

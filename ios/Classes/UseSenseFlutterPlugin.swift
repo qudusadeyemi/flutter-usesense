@@ -38,15 +38,23 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
         if let b = config.branding {
             brandingConfig = BrandingConfig(
                 logoUrl: b.logoUrl,
-                primaryColor: b.primaryColor ?? "#4F63F5",
-                buttonRadius: CGFloat(b.buttonRadius ?? 12),
+                primaryColor: b.primaryColor ?? "#4F7CFF",
+                buttonRadius: CGFloat(b.buttonRadius ?? 10),
                 fontFamily: b.fontFamily
             )
         }
 
+        // `gatewayKey` is intentionally NOT passed to UseSenseConfig. It
+        // existed on the v1.x iOS SDK but was removed in v4.0 when the
+        // Cloudflare Worker proxy took over gateway responsibilities
+        // server-side. The Pigeon interface still accepts the field as
+        // a deprecated no-op for backward compatibility with any Dart
+        // code that was setting it; plug-in consumers should stop
+        // passing it and it will be removed from the Pigeon API in the
+        // next major release.
         let sdkConfig = UseSenseConfig(
+            apiEndpoint: config.baseUrl ?? UseSenseConfig.defaultEndpoint,
             apiKey: config.apiKey,
-            gatewayKey: config.gatewayKey ?? UseSenseConfig.defaultGatewayKey,
             environment: environment,
             branding: brandingConfig
         )
@@ -309,6 +317,13 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
         case .timeout: code = "session_timeout"
         case .serverError: code = "server_error"
         case .serviceUnavailable: code = "service_unavailable"
+        // v4.x-era error codes. These didn't exist in the v1.x SDK, so
+        // the mapping was added when the native dep was bumped to
+        // UseSenseSDK ~> 4.2.
+        case .tokenExpired: code = "token_expired"
+        case .tokenAlreadyUsed: code = "token_already_used"
+        case .insufficientCredits: code = "insufficient_credits"
+        case .nonceMismatch: code = "nonce_mismatch"
         case .unknownError: code = "sdk_error"
         @unknown default: code = "sdk_error"
         }

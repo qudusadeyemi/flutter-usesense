@@ -100,11 +100,17 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
                 PigeonUseSenseEnvironment.PRODUCTION -> UseSenseEnvironment.PRODUCTION
                 PigeonUseSenseEnvironment.AUTO -> UseSenseEnvironment.AUTO
             }
+            // `gatewayKey` is intentionally NOT passed to UseSenseConfig.
+            // It existed on the v1.x Android SDK but was removed in v4.0
+            // when the Cloudflare Worker proxy took over gateway
+            // responsibilities server-side. The Pigeon interface still
+            // accepts the field as a deprecated no-op for backward
+            // compatibility; the param will be removed from the Pigeon
+            // API in the next major release.
             val nativeConfig = UseSenseConfig(
                 apiKey = config.apiKey,
                 environment = environment,
                 baseUrl = config.baseUrl ?: UseSenseConfig.DEFAULT_BASE_URL,
-                gatewayKey = config.gatewayKey,
                 branding = brandingConfig,
                 googleCloudProjectNumber = config.googleCloudProjectNumber
                     ?: UseSenseConfig.DEFAULT_GOOGLE_CLOUD_PROJECT_NUMBER,

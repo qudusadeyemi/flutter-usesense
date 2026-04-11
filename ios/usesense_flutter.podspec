@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'usesense_flutter'
-  s.version          = '1.0.0'
+  s.version          = '1.1.0'
   s.summary          = 'Flutter plugin for UseSense human presence verification.'
   s.description      = <<-DESC
   Flutter plugin wrapping the UseSense iOS SDK for human presence verification
@@ -14,7 +14,10 @@ Pod::Spec.new do |s|
   s.source_files     = 'Classes/**/*'
 
   s.dependency 'Flutter'
-  s.dependency 'UseSenseSDK', '~> 1.0.0'
+  # Native UseSense iOS SDK. Minimum version 4.2.2 — earlier 4.x versions
+  # had `Color.UseSense` theming issues and a terminal-screen centering
+  # bug that's fixed in 4.2.2.
+  s.dependency 'UseSenseSDK', '~> 4.2'
 
   s.platform         = :ios, '16.0'
   s.swift_version    = '5.9'
