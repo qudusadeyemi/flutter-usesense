@@ -78,7 +78,6 @@ class PigeonUseSenseConfig {
     required this.apiKey,
     this.environment = PigeonUseSenseEnvironment.auto,
     this.baseUrl,
-    this.gatewayKey,
     this.branding,
     this.googleCloudProjectNumber,
   });
@@ -86,7 +85,6 @@ class PigeonUseSenseConfig {
   String apiKey;
   PigeonUseSenseEnvironment environment;
   String? baseUrl;
-  String? gatewayKey;
   PigeonBrandingConfig? branding;
   int? googleCloudProjectNumber;
 }

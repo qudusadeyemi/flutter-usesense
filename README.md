@@ -155,10 +155,9 @@ await useSense.initialize(
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `apiKey` | `String` | **required** | Your UseSense API key. Production keys start with `pk_*`; sandbox keys start with `sk_*` or `dk_*`. |
+| `apiKey` | `String` | **required** | Your UseSense API key. Production keys start with `pk_prod_*` / `sk_prod_*`; sandbox keys start with `pk_sandbox_*` / `sk_sandbox_*` / `dk_*`. |
 | `environment` | `UseSenseEnvironment` | `.auto` | Backend environment. `.auto` detects from the key prefix. |
-| `baseUrl` | `String?` | `null` | Override the default backend URL. Useful for on-premise deployments. |
-| `gatewayKey` | `String?` | `null` | Optional gateway key. |
+| `baseUrl` | `String?` | `null` | Override the default backend URL. Useful for on-premise deployments and staging. |
 | `branding` | `BrandingConfig?` | `null` | UI customization for the verification screen. |
 | `googleCloudProjectNumber` | `int?` | `null` | Google Cloud project number for Android Play Integrity attestation. |
 

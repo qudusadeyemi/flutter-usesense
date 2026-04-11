@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'usesense_flutter'
-  s.version          = '1.1.0'
+  s.version          = '2.0.0'
   s.summary          = 'Flutter plugin for UseSense human presence verification.'
   s.description      = <<-DESC
   Flutter plugin wrapping the UseSense iOS SDK for human presence verification

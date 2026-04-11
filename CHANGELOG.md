@@ -4,13 +4,55 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
-## [1.1.0] - 2026-04-11
+## [2.0.0] - 2026-04-11
 
-Infrastructure, native-SDK, and tooling alignment release. No
-breaking changes to the Dart-facing public API. Bumps the native
-SDK deps so the plugin finally compiles against the current iOS /
-Android SDK releases, adds CI + release automation, and reworks
-the example app to accept the API key at runtime.
+**Breaking release.** Combines the native-SDK / infrastructure /
+tooling alignment that was originally planned for `1.1.0` with a
+single wire-level breaking change: removal of the deprecated
+`gatewayKey` field from `PigeonUseSenseConfig` (and therefore from
+the public Dart-facing `UseSenseConfig`). Since the plugin has
+never been published to pub.dev and nobody is currently consuming
+the `1.0.0` git tag, the breaking change is safe to land directly.
+
+### Removed — BREAKING
+
+- **`UseSenseConfig.gatewayKey`** is gone from the Dart API,
+  from the Pigeon-generated `.g.dart` / `.g.swift` / `.g.kt`
+  files, and from the Pigeon interface at
+  `pigeons/usesense_api.dart`. The field was a v1.x artefact
+  from the pre-v4 native SDK era when the plugin passed a
+  gateway token through to the native SDK. The native SDKs
+  removed the corresponding parameter in v4.0 when the
+  Cloudflare Worker proxy took over gateway responsibilities
+  server-side, and the plugin was keeping `gatewayKey` around
+  only as a deprecated no-op for backward compatibility.
+  Removing it from the Pigeon wire shifts the encoded field
+  indices (`branding` moves from index 4 to 3,
+  `googleCloudProjectNumber` from 5 to 4), so the change is
+  wire-incompatible with any `1.0.0` consumer even though
+  `gatewayKey` itself was a no-op. Bumping to 2.0.0 makes
+  that visible.
+
+### Migration from 1.0.0
+
+Remove any `gatewayKey:` argument from your
+`UseSenseConfig(...)` calls:
+
+```diff
+  UseSenseConfig(
+    apiKey: 'sk_sandbox_...',
+    environment: UseSenseEnvironment.sandbox,
+-   gatewayKey: 'obsolete',  // remove this line
+  )
+```
+
+No other public API changes. `apiKey`, `environment`, `baseUrl`,
+`branding`, `googleCloudProjectNumber`, `startVerification`,
+`startRemoteEnrollment`, `startRemoteVerification`, `onEvent`,
+`onCancelled`, `reset` — all unchanged. Code that wasn't passing
+`gatewayKey` compiles and runs unchanged against 2.0.0.
+
+### Non-breaking: everything else originally planned for 1.1.0
 
 ### Added
 
@@ -90,16 +132,12 @@ the example app to accept the API key at runtime.
 
 ### Notes for integrators
 
-- No changes to the public Dart API. The `UseSenseConfig`,
-  `VerificationRequest`, `UseSenseResult`, and `UseSenseEvent`
-  classes are unchanged. Any code written against `1.0.0` should
-  keep compiling against `1.1.0` without modification.
-- `UseSenseConfig.gatewayKey` is deprecated and has no effect
-  (the native SDK no longer supports a gateway key — gateway
-  responsibilities live in the Cloudflare Worker proxy at
-  `api.usesense.ai`). Remove any `gatewayKey:` argument from
-  your `UseSenseConfig(...)` calls at your convenience; it will
-  be removed entirely in the next major release.
+- Except for the removed `gatewayKey` field (see the "Removed —
+  BREAKING" section above), no other public Dart API surface has
+  changed. `UseSenseConfig` gains no new fields, and
+  `VerificationRequest`, `UseSenseResult`, and `UseSenseEvent` are
+  unchanged. Code that wasn't passing `gatewayKey` compiles and
+  runs unchanged.
 
 ## [1.0.0] - 2026-03-13
 

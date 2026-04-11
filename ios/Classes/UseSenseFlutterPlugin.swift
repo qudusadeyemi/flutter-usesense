@@ -44,14 +44,11 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
             )
         }
 
-        // `gatewayKey` is intentionally NOT passed to UseSenseConfig. It
-        // existed on the v1.x iOS SDK but was removed in v4.0 when the
-        // Cloudflare Worker proxy took over gateway responsibilities
-        // server-side. The Pigeon interface still accepts the field as
-        // a deprecated no-op for backward compatibility with any Dart
-        // code that was setting it; plug-in consumers should stop
-        // passing it and it will be removed from the Pigeon API in the
-        // next major release.
+        // Gateway responsibilities live in the Cloudflare Worker proxy
+        // at api.usesense.ai since the v4.0 native SDK rewrite, so
+        // there's no `gatewayKey` on the native UseSenseConfig init and
+        // the Pigeon interface no longer exposes one either (removed
+        // in the 2.0.0 breaking change).
         let sdkConfig = UseSenseConfig(
             apiEndpoint: config.baseUrl ?? UseSenseConfig.defaultEndpoint,
             apiKey: config.apiKey,
