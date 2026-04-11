@@ -67,7 +67,6 @@ class UseSenseConfig {
     required this.apiKey,
     this.environment = UseSenseEnvironment.auto,
     this.baseUrl,
-    this.gatewayKey,
     this.branding,
     this.googleCloudProjectNumber,
   });
@@ -80,9 +79,6 @@ class UseSenseConfig {
 
   /// Override the default backend URL. Null uses the SDK default.
   final String? baseUrl;
-
-  /// Optional Supabase gateway key.
-  final String? gatewayKey;
 
   /// Optional UI branding overrides.
   final BrandingConfig? branding;

@@ -146,7 +146,6 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
       environment:
           PigeonUseSenseEnvironment.values[config.environment.index],
       baseUrl: config.baseUrl,
-      gatewayKey: config.gatewayKey,
       branding: config.branding != null
           ? PigeonBrandingConfig(
               displayName: config.branding!.displayName,
