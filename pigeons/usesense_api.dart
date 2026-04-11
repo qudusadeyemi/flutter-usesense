@@ -3,8 +3,7 @@ import 'package:pigeon/pigeon.dart';
 @ConfigurePigeon(
   PigeonOptions(
     dartOut: 'lib/src/generated/usesense_api.g.dart',
-    kotlinOut:
-        'android/src/main/kotlin/com/usesense/flutter/UseSenseApi.g.kt',
+    kotlinOut: 'android/src/main/kotlin/com/usesense/flutter/UseSenseApi.g.kt',
     kotlinOptions: KotlinOptions(package: 'com.usesense.flutter'),
     swiftOut: 'ios/Classes/UseSenseApi.g.swift',
   ),
@@ -78,7 +77,6 @@ class PigeonUseSenseConfig {
     required this.apiKey,
     this.environment = PigeonUseSenseEnvironment.auto,
     this.baseUrl,
-    this.gatewayKey,
     this.branding,
     this.googleCloudProjectNumber,
   });
@@ -86,7 +84,6 @@ class PigeonUseSenseConfig {
   String apiKey;
   PigeonUseSenseEnvironment environment;
   String? baseUrl;
-  String? gatewayKey;
   PigeonBrandingConfig? branding;
   int? googleCloudProjectNumber;
 }

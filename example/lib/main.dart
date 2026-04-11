@@ -8,44 +8,18 @@ void main() {
   runApp(const UseSenseExampleApp());
 }
 
-class UseSenseExampleApp extends StatefulWidget {
+/// Example app root.
+///
+/// The SDK is intentionally NOT initialized here. Initialization is
+/// deferred to [HomeScreen], which reads an API key from a text field
+/// (persisted via shared_preferences) and calls `UseSenseFlutter.initialize`
+/// lazily on first Enroll/Authenticate tap. This matches the iOS
+/// example's `@AppStorage("apiKey")` + `SecureField` pattern and the
+/// Android example's `SharedPreferences`-backed `OutlinedTextField`
+/// pattern, so integrators can clone, run, paste their key once, and
+/// test without touching any source code.
+class UseSenseExampleApp extends StatelessWidget {
   const UseSenseExampleApp({super.key});
-
-  @override
-  State<UseSenseExampleApp> createState() => _UseSenseExampleAppState();
-}
-
-class _UseSenseExampleAppState extends State<UseSenseExampleApp> {
-  final _useSense = UseSenseFlutter();
-  bool _initialized = false;
-  String? _initError;
-
-  @override
-  void initState() {
-    super.initState();
-    _initSdk();
-  }
-
-  Future<void> _initSdk() async {
-    try {
-      await _useSense.initialize(
-        const UseSenseConfig(
-          // TODO: Replace with your sandbox API key from https://app.usesense.ai
-          apiKey: 'sk_test_YOUR_SANDBOX_API_KEY',
-          environment: UseSenseEnvironment.sandbox,
-        ),
-      );
-      setState(() => _initialized = true);
-    } on UseSenseError catch (e) {
-      setState(() => _initError = e.message);
-    }
-  }
-
-  @override
-  void dispose() {
-    _useSense.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,20 +27,16 @@ class _UseSenseExampleAppState extends State<UseSenseExampleApp> {
       title: 'UseSense Example',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF4F46E5),
+        colorSchemeSeed: const Color(0xFF4F7CFF),
         useMaterial3: true,
         brightness: Brightness.light,
       ),
       darkTheme: ThemeData(
-        colorSchemeSeed: const Color(0xFF4F46E5),
+        colorSchemeSeed: const Color(0xFF4F7CFF),
         useMaterial3: true,
         brightness: Brightness.dark,
       ),
-      home: HomeScreen(
-        useSense: _useSense,
-        initialized: _initialized,
-        initError: _initError,
-      ),
+      home: HomeScreen(useSense: UseSenseFlutter()),
     );
   }
 }

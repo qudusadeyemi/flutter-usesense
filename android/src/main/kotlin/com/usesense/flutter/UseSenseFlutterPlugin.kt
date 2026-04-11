@@ -100,11 +100,15 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
                 PigeonUseSenseEnvironment.PRODUCTION -> UseSenseEnvironment.PRODUCTION
                 PigeonUseSenseEnvironment.AUTO -> UseSenseEnvironment.AUTO
             }
+            // Gateway responsibilities live in the Cloudflare Worker proxy
+            // at api.usesense.ai since the v4.0 native SDK rewrite, so
+            // there's no `gatewayKey` on the native UseSenseConfig init
+            // and the Pigeon interface no longer exposes one either
+            // (removed in the 2.0.0 breaking change).
             val nativeConfig = UseSenseConfig(
                 apiKey = config.apiKey,
                 environment = environment,
                 baseUrl = config.baseUrl ?: UseSenseConfig.DEFAULT_BASE_URL,
-                gatewayKey = config.gatewayKey,
                 branding = brandingConfig,
                 googleCloudProjectNumber = config.googleCloudProjectNumber
                     ?: UseSenseConfig.DEFAULT_GOOGLE_CLOUD_PROJECT_NUMBER,

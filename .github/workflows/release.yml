@@ -1,0 +1,108 @@
+# Release workflow — publishes the plugin to pub.dev and creates a GitHub Release
+#
+# Triggers:
+#   - Git tags matching `v*` pattern (e.g., v1.1.0, v1.2.3-beta01)
+#   - Manual dispatch via workflow_dispatch
+#
+# pub.dev authentication:
+#   pub.dev supports GitHub Actions OIDC as a first-class auth mechanism, so
+#   this workflow does NOT require any long-lived secret. The first publish
+#   still needs a one-time manual `dart pub publish` from a machine that has
+#   been authenticated with `dart pub token add https://pub.dev` to claim
+#   the package name — after that first publish, this workflow takes over.
+#
+#   To enable OIDC for a specific package on pub.dev:
+#     1. Go to https://pub.dev/packages/usesense_flutter/admin
+#     2. Under "Automated publishing", add this repository + workflow filter
+#        (repository: qudusadeyemi/flutter-usesense, tagPattern: v*)
+#     3. Save. Subsequent `v*` tag pushes will auto-publish.
+#
+#   If OIDC hasn't been configured yet, the publish step below will fail
+#   with a clear "No credentials" error and the rest of the workflow
+#   (GitHub Release creation) will still run.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (without v prefix, e.g. 1.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  # id-token: write is required for pub.dev OIDC authentication.
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify pubspec version matches tag
+        run: |
+          PUBSPEC_VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          TAG_VERSION="${{ steps.version.outputs.version }}"
+          if [ "$PUBSPEC_VERSION" != "$TAG_VERSION" ]; then
+            echo "pubspec.yaml version ($PUBSPEC_VERSION) does not match tag version ($TAG_VERSION)."
+            echo "Bump pubspec.yaml and re-tag before pushing."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Format check
+        run: dart format --set-exit-if-changed .
+
+      - name: Static analysis
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+      - name: Unit tests
+        run: flutter test
+
+      - name: Publish to pub.dev
+        # Uses the OIDC token provided by GitHub Actions. Requires the
+        # package to have automated publishing configured on pub.dev
+        # (see the header comment above).
+        run: dart pub publish --force
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          body: |
+            ## Installation
+
+            ```yaml
+            dependencies:
+              usesense_flutter: ^${{ steps.version.outputs.version }}
+            ```
+
+            Then run `flutter pub get`. See the [README](https://github.com/qudusadeyemi/flutter-usesense#readme) for platform setup instructions.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

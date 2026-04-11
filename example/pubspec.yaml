@@ -10,6 +10,11 @@ dependencies:
     sdk: flutter
   usesense_flutter:
     path: ../
+  # Persists the user-entered API key across launches, matching the
+  # iOS example's @AppStorage and Android example's SharedPreferences
+  # pattern. Only the example app needs this dep; the plugin itself
+  # has no runtime state to persist.
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:

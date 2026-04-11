@@ -94,7 +94,6 @@ class PigeonUseSenseConfig {
     required this.apiKey,
     this.environment = PigeonUseSenseEnvironment.auto,
     this.baseUrl,
-    this.gatewayKey,
     this.branding,
     this.googleCloudProjectNumber,
   });
@@ -102,7 +101,6 @@ class PigeonUseSenseConfig {
   String apiKey;
   PigeonUseSenseEnvironment environment;
   String? baseUrl;
-  String? gatewayKey;
   PigeonBrandingConfig? branding;
   int? googleCloudProjectNumber;
 
@@ -111,7 +109,6 @@ class PigeonUseSenseConfig {
       apiKey,
       environment.index,
       baseUrl,
-      gatewayKey,
       branding?.encode(),
       googleCloudProjectNumber,
     ];
@@ -123,11 +120,10 @@ class PigeonUseSenseConfig {
       apiKey: result[0]! as String,
       environment: PigeonUseSenseEnvironment.values[result[1]! as int],
       baseUrl: result[2] as String?,
-      gatewayKey: result[3] as String?,
-      branding: result[4] != null
-          ? PigeonBrandingConfig.decode(result[4]! as List<Object?>)
+      branding: result[3] != null
+          ? PigeonBrandingConfig.decode(result[3]! as List<Object?>)
           : null,
-      googleCloudProjectNumber: result[5] as int?,
+      googleCloudProjectNumber: result[4] as int?,
     );
   }
 }

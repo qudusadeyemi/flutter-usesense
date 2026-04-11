@@ -50,8 +50,7 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
     String remoteEnrollmentId,
   ) async {
     try {
-      final result =
-          await _hostApi.startRemoteEnrollment(remoteEnrollmentId);
+      final result = await _hostApi.startRemoteEnrollment(remoteEnrollmentId);
       return _fromPigeonResult(result);
     } on PlatformException catch (e) {
       throw _wrapError(e);
@@ -63,8 +62,7 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
     String remoteSessionId,
   ) async {
     try {
-      final result =
-          await _hostApi.startRemoteVerification(remoteSessionId);
+      final result = await _hostApi.startRemoteVerification(remoteSessionId);
       return _fromPigeonResult(result);
     } on PlatformException catch (e) {
       throw _wrapError(e);
@@ -143,10 +141,8 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
   PigeonUseSenseConfig _toPigeonConfig(UseSenseConfig config) {
     return PigeonUseSenseConfig(
       apiKey: config.apiKey,
-      environment:
-          PigeonUseSenseEnvironment.values[config.environment.index],
+      environment: PigeonUseSenseEnvironment.values[config.environment.index],
       baseUrl: config.baseUrl,
-      gatewayKey: config.gatewayKey,
       branding: config.branding != null
           ? PigeonBrandingConfig(
               displayName: config.branding!.displayName,
@@ -185,9 +181,8 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
       code: UseSenseError.codeFromString(e.code),
       message: e.message ?? 'An unknown error occurred.',
       isRetryable: _isRetryableCode(e.code),
-      details: e.details is Map
-          ? (e.details as Map).cast<String, String>()
-          : null,
+      details:
+          e.details is Map ? (e.details as Map).cast<String, String>() : null,
     );
   }
 

@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install plugin dependencies
+        run: flutter pub get
+
+      - name: Verify pub publish shape (dry run)
+        # Catches publishing-time issues (missing fields, ignored files,
+        # analysis errors in lib/) on every PR so the release workflow
+        # doesn't fail at tag time.
+        run: flutter pub publish --dry-run
+
+      - name: Format check
+        # `dart format --set-exit-if-changed` fails the build if any
+        # file would be reformatted. This keeps the baseline consistent
+        # without requiring maintainers to run a formatter pre-commit.
+        run: dart format --set-exit-if-changed .
+
+      - name: Static analysis
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+      - name: Unit tests
+        run: flutter test
+
+      - name: Install example dependencies
+        run: flutter pub get
+        working-directory: example
+
+      - name: Analyze example
+        run: flutter analyze
+        working-directory: example

@@ -136,25 +136,23 @@ struct PigeonUseSenseConfig {
   var apiKey: String
   var environment: PigeonUseSenseEnvironment
   var baseUrl: String?
-  var gatewayKey: String?
   var branding: PigeonBrandingConfig?
   var googleCloudProjectNumber: Int64?
 
   func toList() -> [Any?] {
-    return [apiKey, environment.rawValue, baseUrl, gatewayKey, branding?.toList(), googleCloudProjectNumber]
+    return [apiKey, environment.rawValue, baseUrl, branding?.toList(), googleCloudProjectNumber]
   }
 
   static func fromList(_ pigeonVar_list: [Any?]) -> PigeonUseSenseConfig {
-    let branding: PigeonBrandingConfig? = nilOrValue(pigeonVar_list[4]) != nil
-      ? PigeonBrandingConfig.fromList(pigeonVar_list[4] as! [Any?])
+    let branding: PigeonBrandingConfig? = nilOrValue(pigeonVar_list[3]) != nil
+      ? PigeonBrandingConfig.fromList(pigeonVar_list[3] as! [Any?])
       : nil
     return PigeonUseSenseConfig(
       apiKey: pigeonVar_list[0] as! String,
       environment: PigeonUseSenseEnvironment(rawValue: pigeonVar_list[1] as! Int)!,
       baseUrl: nilOrValue(pigeonVar_list[2]),
-      gatewayKey: nilOrValue(pigeonVar_list[3]),
       branding: branding,
-      googleCloudProjectNumber: nilOrValue(pigeonVar_list[5])
+      googleCloudProjectNumber: nilOrValue(pigeonVar_list[4])
     )
   }
 }

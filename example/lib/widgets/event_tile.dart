@@ -10,8 +10,7 @@ class EventTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final time = DateTime.fromMillisecondsSinceEpoch(event.timestamp);
-    final timeStr =
-        '${time.hour.toString().padLeft(2, '0')}:'
+    final timeStr = '${time.hour.toString().padLeft(2, '0')}:'
         '${time.minute.toString().padLeft(2, '0')}:'
         '${time.second.toString().padLeft(2, '0')}';
 
