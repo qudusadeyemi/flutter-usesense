@@ -19,6 +19,64 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
         let instance = UseSenseFlutterPlugin()
         instance.flutterApi = UseSenseFlutterApiImpl(binaryMessenger: registrar.messenger())
         UseSenseHostApiSetup(registrar.messenger(), instance)
+
+        // F-1: v4 uses a direct MethodChannel (sidestepping pigeon regen).
+        let v4Channel = FlutterMethodChannel(
+            name: "com.usesense.flutter/v4",
+            binaryMessenger: registrar.messenger()
+        )
+        v4Channel.setMethodCallHandler { [weak instance] call, result in
+            instance?.handleV4Call(call: call, result: result)
+        }
+        instance.v4Channel = v4Channel
+    }
+
+    private var v4Channel: FlutterMethodChannel?
+    private var v4Delegate: V4FlutterBridgeDelegate?
+
+    private func handleV4Call(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        switch call.method {
+        case "startV4Verification":
+            guard let args = call.arguments as? [String: Any?],
+                  let sessionIdStr = args["sessionId"] as? String,
+                  let sessionId = UUID(uuidString: sessionIdStr),
+                  let sessionToken = args["sessionToken"] as? String,
+                  let nonce = args["nonce"] as? String,
+                  let apiBaseStr = args["apiBaseUrl"] as? String,
+                  let apiBaseURL = URL(string: apiBaseStr) else {
+                result(FlutterError(code: "INVALID_REQUEST",
+                                    message: "sessionId, sessionToken, nonce, apiBaseUrl required",
+                                    details: nil))
+                return
+            }
+            let environment = (args["environment"] as? String) ?? "production"
+            let displayName = args["displayName"] as? String
+            let client = self.client ?? UseSense(config: UseSenseConfig(
+                apiEndpoint: apiBaseStr, apiKey: "v4-bridge", environment: .production, branding: nil
+            ))
+            let config = LiveSenseV4Config(
+                sessionId: sessionId,
+                sessionToken: sessionToken,
+                nonce: nonce,
+                apiBaseURL: apiBaseURL,
+                environment: environment,
+                brandPrimaryColor: nil,
+                displayName: displayName
+            )
+            let delegate = V4FlutterBridgeDelegate(result: result)
+            let session = client.startV4Session(config: config, delegate: delegate)
+            delegate.retain(session)
+            do {
+                try session.start()
+            } catch {
+                result(FlutterError(code: "V4_FAILED",
+                                    message: error.localizedDescription,
+                                    details: nil))
+            }
+            v4Delegate = delegate
+        default:
+            result(FlutterMethodNotImplemented)
+        }
     }
 
     // MARK: - UseSenseHostApi

@@ -57,4 +57,8 @@ abstract class UseSenseFlutterPlatform extends PlatformInterface {
 
   /// Remove a previously registered cancellation listener.
   void removeCancelledListener(void Function() listener);
+
+  /// Start a LiveSense v4 zoom-motion verification session. Phase 1
+  /// ticket F-1.
+  Future<V4Verdict> startV4Verification(V4VerificationRequest request);
 }
