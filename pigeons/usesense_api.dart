@@ -120,6 +120,63 @@ class PigeonUseSenseResult {
   String timestamp;
 }
 
+// ---------------------------------------------------------------------------
+// LiveSense v4 (F-1)
+// ---------------------------------------------------------------------------
+
+/// Request to start a LiveSense v4 zoom-motion verification.
+class PigeonV4VerificationRequest {
+  PigeonV4VerificationRequest({
+    required this.sessionId,
+    required this.sessionToken,
+    required this.nonce,
+    required this.apiBaseUrl,
+    this.environment,
+    this.displayName,
+    this.brandPrimaryColor,
+  });
+
+  String sessionId;
+  String sessionToken;
+  String nonce;
+  String apiBaseUrl;
+  String? environment;
+  String? displayName;
+  String? brandPrimaryColor;
+}
+
+/// Opaque verdict returned from POST /v1/sessions/:id/result. Matches
+/// the server schema exactly. Sub-scores and pillar verdicts are never
+/// returned; customers consume detail via the signed webhook.
+class PigeonV4Verdict {
+  PigeonV4Verdict({
+    required this.sessionId,
+    required this.verdict,
+    required this.confidence,
+    required this.assuranceLevelAchieved,
+    required this.captureChannel,
+    this.matchSenseEmbeddingId,
+    required this.timestamp,
+  });
+
+  String sessionId;
+
+  /// 'pass' | 'fail' | 'review'.
+  String verdict;
+
+  /// 'high' | 'medium' | 'low'.
+  String confidence;
+
+  /// 'mobile_hardware' | 'web_attested' | 'web_unattested'.
+  String assuranceLevelAchieved;
+
+  /// 'ios' | 'android' | 'rn' | 'flutter' | 'web'.
+  String captureChannel;
+
+  String? matchSenseEmbeddingId;
+  String timestamp;
+}
+
 /// An event emitted during a verification session.
 class PigeonUseSenseEvent {
   PigeonUseSenseEvent({
@@ -185,6 +242,14 @@ abstract class UseSenseHostApi {
 
   /// Reset the SDK, releasing all resources.
   void reset();
+
+  /// Start a LiveSense v4 zoom-motion verification session.
+  ///
+  /// The session must already exist on the backend; session_token,
+  /// nonce, and apiBaseUrl are forwarded to the native SDK. The
+  /// returned future resolves with the opaque verdict.
+  @async
+  PigeonV4Verdict startV4Verification(PigeonV4VerificationRequest request);
 }
 
 // ---------------------------------------------------------------------------

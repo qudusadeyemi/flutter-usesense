@@ -7,6 +7,8 @@ import android.os.Looper
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodCall
 import com.usesense.sdk.UseSense
 import com.usesense.sdk.UseSenseCallback
 import com.usesense.sdk.UseSenseConfig
@@ -32,6 +34,62 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
     private var flutterApi: UseSenseFlutterApi? = null
     private var eventUnsubscribe: (() -> Unit)? = null
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var v4Channel: MethodChannel? = null
+
+    private fun handleV4Call(call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "startV4Verification" -> {
+                val currentActivity = activity ?: return result.error(
+                    "NO_ACTIVITY", "No current activity", null
+                )
+                val args = call.arguments as? Map<*, *> ?: return result.error(
+                    "INVALID_REQUEST", "Missing arguments", null
+                )
+                val request = com.usesense.sdk.api.V4VerificationRequest(
+                    sessionId = args["sessionId"] as? String ?: return result.error(
+                        "INVALID_REQUEST", "sessionId is required", null
+                    ),
+                    sessionToken = args["sessionToken"] as? String ?: return result.error(
+                        "INVALID_REQUEST", "sessionToken is required", null
+                    ),
+                    nonce = args["nonce"] as? String ?: return result.error(
+                        "INVALID_REQUEST", "nonce is required", null
+                    ),
+                    apiBaseUrl = args["apiBaseUrl"] as? String ?: return result.error(
+                        "INVALID_REQUEST", "apiBaseUrl is required", null
+                    ),
+                    environment = args["environment"] as? String ?: "production",
+                    displayName = args["displayName"] as? String,
+                    brandPrimaryColor = (args["brandPrimaryColor"] as? String)?.let {
+                        runCatching { android.graphics.Color.parseColor(it) }.getOrNull()
+                    }
+                )
+                UseSense.startV4Verification(currentActivity, request, object : com.usesense.sdk.api.V4VerificationCallback {
+                    override fun onComplete(verdict: com.usesense.sdk.api.V4Verdict) {
+                        val map = mapOf(
+                            "session_id" to verdict.sessionId,
+                            "verdict" to verdict.verdict.name.lowercase(),
+                            "confidence" to verdict.confidence.name.lowercase(),
+                            "assurance_level_achieved" to verdict.assuranceLevelAchieved,
+                            "capture_channel" to "flutter",
+                            "match_sense_embedding_id" to verdict.matchSenseEmbeddingId,
+                            "timestamp" to verdict.timestamp
+                        )
+                        mainHandler.post { result.success(map) }
+                    }
+                    override fun onFailure(error: Throwable) {
+                        mainHandler.post {
+                            result.error("V4_FAILED", error.message ?: "v4 failed", null)
+                        }
+                    }
+                    override fun onPhaseChange(phase: com.usesense.sdk.api.V4Phase) {
+                        // No Dart event channel wired for phases in Phase 1.
+                    }
+                })
+            }
+            else -> result.notImplemented()
+        }
+    }
 
     // -------------------------------------------------------------------------
     // FlutterPlugin
@@ -41,10 +99,17 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
         context = binding.applicationContext
         flutterApi = UseSenseFlutterApi(binding.binaryMessenger)
         UseSenseHostApi.setUp(binding.binaryMessenger, this)
+
+        // F-1: v4 direct method channel. Avoids a mandatory pigeon
+        // regeneration step on every v4 contract change.
+        v4Channel = MethodChannel(binding.binaryMessenger, "com.usesense.flutter/v4")
+        v4Channel?.setMethodCallHandler { call, result -> handleV4Call(call, result) }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         UseSenseHostApi.setUp(binding.binaryMessenger, null)
+        v4Channel?.setMethodCallHandler(null)
+        v4Channel = null
         eventUnsubscribe?.invoke()
         eventUnsubscribe = null
         flutterApi = null

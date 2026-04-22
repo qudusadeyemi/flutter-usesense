@@ -116,6 +116,22 @@ class UseSenseFlutter {
     return _platform.reset();
   }
 
+  /// Start a LiveSense v4 zoom-motion verification session.
+  ///
+  /// Phase 1 ticket F-1.
+  ///
+  /// The session must have been created on your backend; pass the
+  /// session_id, session_token, nonce, and apiBaseUrl received from
+  /// the Server API. The native SDK presents a full-screen zoom
+  /// capture UI, signs the frame hash chain with the platform-attested
+  /// key, uploads, and returns the opaque [V4Verdict].
+  ///
+  /// Sub-scores and pillar verdicts never reach this method; consume
+  /// detail via the signed webhook delivered to your backend.
+  Future<V4Verdict> startV4Verification(V4VerificationRequest request) {
+    return _platform.startV4Verification(request);
+  }
+
   /// Release resources held by this instance.
   ///
   /// Call this when you no longer need the plugin (e.g. on widget disposal).

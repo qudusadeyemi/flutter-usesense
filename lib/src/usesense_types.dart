@@ -230,3 +230,91 @@ class UseSenseEvent {
   @override
   String toString() => 'UseSenseEvent(type: $type, timestamp: $timestamp)';
 }
+
+// ---------------------------------------------------------------------------
+// LiveSense v4 (F-1)
+// ---------------------------------------------------------------------------
+
+/// Request to start a LiveSense v4 zoom-motion verification.
+class V4VerificationRequest {
+  /// Creates a [V4VerificationRequest].
+  const V4VerificationRequest({
+    required this.sessionId,
+    required this.sessionToken,
+    required this.nonce,
+    required this.apiBaseUrl,
+    this.environment,
+    this.displayName,
+    this.brandPrimaryColor,
+  });
+
+  /// Session id returned by POST /v1/sessions or exchange-token.
+  final String sessionId;
+
+  /// Session token returned alongside sessionId.
+  final String sessionToken;
+
+  /// Session nonce; used for replay protection.
+  final String nonce;
+
+  /// API base URL, e.g. `https://api.usesense.ai/v1`.
+  final String apiBaseUrl;
+
+  /// Deployment environment. Defaults to `production` when null.
+  final UseSenseEnvironment? environment;
+
+  /// Optional display name for the capture UI.
+  final String? displayName;
+
+  /// Optional hex primary colour (e.g. `#7BD89C`) applied to the oval.
+  final String? brandPrimaryColor;
+}
+
+/// Decision from a v4 session.
+enum V4Decision { pass, fail, review }
+
+/// Confidence tier of a v4 verdict.
+enum V4Confidence { high, medium, low }
+
+/// Assurance tier the session achieved.
+enum V4AssuranceLevel { mobileHardware, webAttested, webUnattested }
+
+/// Opaque v4 verdict. Matches the server's V4VerdictResponse shape.
+/// Pillar sub-scores never appear here.
+class V4Verdict {
+  /// Creates a [V4Verdict].
+  const V4Verdict({
+    required this.sessionId,
+    required this.verdict,
+    required this.confidence,
+    required this.assuranceLevelAchieved,
+    required this.captureChannel,
+    this.matchSenseEmbeddingId,
+    required this.timestamp,
+  });
+
+  /// Session ID this verdict is for.
+  final String sessionId;
+
+  /// pass | fail | review.
+  final V4Decision verdict;
+
+  /// high | medium | low.
+  final V4Confidence confidence;
+
+  /// mobileHardware | webAttested | webUnattested.
+  final V4AssuranceLevel assuranceLevelAchieved;
+
+  /// Always 'flutter' when the session came from this SDK.
+  final String captureChannel;
+
+  /// Optional embedding id for downstream dedupe queries.
+  final String? matchSenseEmbeddingId;
+
+  /// Server-emitted ISO8601 timestamp.
+  final String timestamp;
+
+  @override
+  String toString() =>
+      'V4Verdict(session=$sessionId, verdict=$verdict, confidence=$confidence)';
+}

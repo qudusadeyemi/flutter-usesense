@@ -87,6 +87,84 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
     }
   }
 
+  // v4 uses a direct MethodChannel (not pigeon-generated) so we can ship
+  // F-1 without requiring a `dart run pigeon` regeneration step at commit
+  // time. Pigeon spec in pigeons/usesense_api.dart carries the authoritative
+  // definitions; once regenerated, this call can move to _hostApi.
+  static const MethodChannel _v4Channel = MethodChannel('com.usesense.flutter/v4');
+
+  @override
+  Future<V4Verdict> startV4Verification(V4VerificationRequest request) async {
+    try {
+      final Map<String, dynamic> payload = {
+        'sessionId': request.sessionId,
+        'sessionToken': request.sessionToken,
+        'nonce': request.nonce,
+        'apiBaseUrl': request.apiBaseUrl,
+        'environment': (request.environment ?? UseSenseEnvironment.production).name,
+        'displayName': request.displayName,
+        'brandPrimaryColor': request.brandPrimaryColor,
+      };
+      final Map<dynamic, dynamic>? raw =
+          await _v4Channel.invokeMapMethod<dynamic, dynamic>('startV4Verification', payload);
+      if (raw == null) {
+        throw const UseSenseError(
+          code: 'v4_null_response',
+          message: 'Native v4 call returned null',
+        );
+      }
+      return _parseV4Verdict(raw);
+    } on PlatformException catch (e) {
+      throw _wrapError(e);
+    }
+  }
+
+  V4Verdict _parseV4Verdict(Map<dynamic, dynamic> raw) {
+    V4Decision parseDecision(String v) {
+      switch (v.toLowerCase()) {
+        case 'pass':
+          return V4Decision.pass;
+        case 'review':
+          return V4Decision.review;
+        default:
+          return V4Decision.fail;
+      }
+    }
+
+    V4Confidence parseConfidence(String v) {
+      switch (v.toLowerCase()) {
+        case 'high':
+          return V4Confidence.high;
+        case 'medium':
+          return V4Confidence.medium;
+        default:
+          return V4Confidence.low;
+      }
+    }
+
+    V4AssuranceLevel parseAssurance(String v) {
+      switch (v.toLowerCase()) {
+        case 'mobile_hardware':
+          return V4AssuranceLevel.mobileHardware;
+        case 'web_attested':
+          return V4AssuranceLevel.webAttested;
+        default:
+          return V4AssuranceLevel.webUnattested;
+      }
+    }
+
+    return V4Verdict(
+      sessionId: raw['session_id'] as String? ?? '',
+      verdict: parseDecision((raw['verdict'] as String?) ?? 'fail'),
+      confidence: parseConfidence((raw['confidence'] as String?) ?? 'low'),
+      assuranceLevelAchieved:
+          parseAssurance((raw['assurance_level_achieved'] as String?) ?? 'web_unattested'),
+      captureChannel: (raw['capture_channel'] as String?) ?? 'flutter',
+      matchSenseEmbeddingId: raw['match_sense_embedding_id'] as String?,
+      timestamp: (raw['timestamp'] as String?) ?? '',
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Event listeners
   // ---------------------------------------------------------------------------
