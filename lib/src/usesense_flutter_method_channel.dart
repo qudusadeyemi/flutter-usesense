@@ -109,7 +109,10 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
           await _v4Channel.invokeMapMethod<dynamic, dynamic>('startV4Verification', payload);
       if (raw == null) {
         throw const UseSenseError(
-          code: 'v4_null_response',
+          // captureFailed (4001) is the closest match for a v4 capture
+          // returning an empty payload. The previous string literal didn't
+          // compile against the int-typed `code` field.
+          code: UseSenseError.captureFailed,
           message: 'Native v4 call returned null',
         );
       }
