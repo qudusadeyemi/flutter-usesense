@@ -61,7 +61,8 @@ void main() {
     expect(result.outcome, isNull);
   });
 
-  test('runFlow translates a PlatformException into a typed FlowError', () async {
+  test('runFlow translates a PlatformException into a typed FlowError',
+      () async {
     messenger.setMockMethodCallHandler(channel, (call) async {
       throw PlatformException(
         code: 'token_expired',

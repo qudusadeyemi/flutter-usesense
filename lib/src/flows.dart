@@ -101,6 +101,7 @@ enum FlowErrorCode {
   providerUnavailable,
   cancelled,
   unsupportedAction,
+
   /// Server form validation failed. The native runner handles this inline
   /// (per-field highlights) and never reports terminal — but if a host app
   /// drives advance() outside the runner, the 422 surfaces with this code.
@@ -180,12 +181,13 @@ class UseSenseFlows {
         },
       );
       if (result == null) {
-        throw FlowError(FlowErrorCode.unknown, 'Empty result from native runner');
+        throw FlowError(
+            FlowErrorCode.unknown, 'Empty result from native runner');
       }
       return FlowRunResult.fromMap(result);
     } on PlatformException catch (e) {
-      throw FlowError(FlowErrorCode.fromWire(e.code), e.message ?? 'Flow failed');
+      throw FlowError(
+          FlowErrorCode.fromWire(e.code), e.message ?? 'Flow failed');
     }
   }
 }
-
