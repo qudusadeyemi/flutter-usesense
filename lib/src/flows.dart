@@ -182,12 +182,16 @@ class UseSenseFlows {
       );
       if (result == null) {
         throw FlowError(
-            FlowErrorCode.unknown, 'Empty result from native runner');
+          FlowErrorCode.unknown,
+          'Empty result from native runner',
+        );
       }
       return FlowRunResult.fromMap(result);
     } on PlatformException catch (e) {
       throw FlowError(
-          FlowErrorCode.fromWire(e.code), e.message ?? 'Flow failed');
+        FlowErrorCode.fromWire(e.code),
+        e.message ?? 'Flow failed',
+      );
     }
   }
 }

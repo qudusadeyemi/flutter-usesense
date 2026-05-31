@@ -91,7 +91,8 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
   // F-1 without requiring a `dart run pigeon` regeneration step at commit
   // time. Pigeon spec in pigeons/usesense_api.dart carries the authoritative
   // definitions; once regenerated, this call can move to _hostApi.
-  static const MethodChannel _v4Channel = MethodChannel('com.usesense.flutter/v4');
+  static const MethodChannel _v4Channel =
+      MethodChannel('com.usesense.flutter/v4');
 
   @override
   Future<V4Verdict> startV4Verification(V4VerificationRequest request) async {
@@ -101,12 +102,13 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
         'sessionToken': request.sessionToken,
         'nonce': request.nonce,
         'apiBaseUrl': request.apiBaseUrl,
-        'environment': (request.environment ?? UseSenseEnvironment.production).name,
+        'environment':
+            (request.environment ?? UseSenseEnvironment.production).name,
         'displayName': request.displayName,
         'brandPrimaryColor': request.brandPrimaryColor,
       };
-      final Map<dynamic, dynamic>? raw =
-          await _v4Channel.invokeMapMethod<dynamic, dynamic>('startV4Verification', payload);
+      final Map<dynamic, dynamic>? raw = await _v4Channel
+          .invokeMapMethod<dynamic, dynamic>('startV4Verification', payload);
       if (raw == null) {
         throw const UseSenseError(
           // captureFailed (4001) is the closest match for a v4 capture
@@ -160,8 +162,9 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
       sessionId: raw['session_id'] as String? ?? '',
       verdict: parseDecision((raw['verdict'] as String?) ?? 'fail'),
       confidence: parseConfidence((raw['confidence'] as String?) ?? 'low'),
-      assuranceLevelAchieved:
-          parseAssurance((raw['assurance_level_achieved'] as String?) ?? 'web_unattested'),
+      assuranceLevelAchieved: parseAssurance(
+        (raw['assurance_level_achieved'] as String?) ?? 'web_unattested',
+      ),
       captureChannel: (raw['capture_channel'] as String?) ?? 'flutter',
       matchSenseEmbeddingId: raw['match_sense_embedding_id'] as String?,
       timestamp: (raw['timestamp'] as String?) ?? '',
