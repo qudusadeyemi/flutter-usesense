@@ -93,6 +93,9 @@ void main() {
       'provider_unavailable': FlowErrorCode.providerUnavailable,
       'cancelled': FlowErrorCode.cancelled,
       'unsupported_action': FlowErrorCode.unsupportedAction,
+      // Server form validation: the native runner handles this inline, but
+      // host apps driving advance() outside the runner still see it.
+      'invalid_input': FlowErrorCode.invalidInput,
       // Anything unknown collapses to FlowErrorCode.unknown.
       'lol_what': FlowErrorCode.unknown,
     };

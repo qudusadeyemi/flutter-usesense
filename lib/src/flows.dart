@@ -101,6 +101,10 @@ enum FlowErrorCode {
   providerUnavailable,
   cancelled,
   unsupportedAction,
+  /// Server form validation failed. The native runner handles this inline
+  /// (per-field highlights) and never reports terminal — but if a host app
+  /// drives advance() outside the runner, the 422 surfaces with this code.
+  invalidInput,
   unknown;
 
   static FlowErrorCode fromWire(String? wire) {
@@ -119,6 +123,8 @@ enum FlowErrorCode {
         return FlowErrorCode.cancelled;
       case 'unsupported_action':
         return FlowErrorCode.unsupportedAction;
+      case 'invalid_input':
+        return FlowErrorCode.invalidInput;
     }
     return FlowErrorCode.unknown;
   }
