@@ -32,3 +32,14 @@ export 'src/usesense_types.dart'
         UseSenseEventType,
         UseSenseResult,
         VerificationRequest;
+
+// Slice 5c: Flows. A parallel surface to Sessions — host apps choose one
+// per call. See guides/flows/sessions-vs-flows in the API docs.
+export 'src/flows.dart'
+    show
+        FlowError,
+        FlowErrorCode,
+        FlowOutcome,
+        FlowRunResult,
+        FlowRunState,
+        UseSenseFlows;

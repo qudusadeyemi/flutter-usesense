@@ -13,6 +13,10 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
     private var client: UseSense?
     private var nativeConfig: UseSenseConfig?
 
+    // Slice 5c: Flows runner bridge (parallel surface to Sessions).
+    private var flowsChannel: FlutterMethodChannel?
+    private var flowsBridge: UseSenseFlowsBridge?
+
     // MARK: - FlutterPlugin
 
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -29,6 +33,19 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
             instance?.handleV4Call(call: call, result: result)
         }
         instance.v4Channel = v4Channel
+
+        // Slice 5c: Flows runner channel (parallel surface to Sessions, not a
+        // replacement). Same sidestepping-pigeon pattern as v4.
+        let flowsBridge = UseSenseFlowsBridge(registrar: registrar)
+        instance.flowsBridge = flowsBridge
+        let flowsChannel = FlutterMethodChannel(
+            name: "com.usesense.flutter/flows",
+            binaryMessenger: registrar.messenger()
+        )
+        flowsChannel.setMethodCallHandler { call, result in
+            flowsBridge.handle(call: call, result: result)
+        }
+        instance.flowsChannel = flowsChannel
     }
 
     private var v4Channel: FlutterMethodChannel?

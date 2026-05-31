@@ -35,6 +35,8 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
     private var eventUnsubscribe: (() -> Unit)? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private var v4Channel: MethodChannel? = null
+    private var flowsChannel: MethodChannel? = null
+    private var flowsBridge: UseSenseFlowsBridge? = null
 
     private fun handleV4Call(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
@@ -104,12 +106,23 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
         // regeneration step on every v4 contract change.
         v4Channel = MethodChannel(binding.binaryMessenger, "com.usesense.flutter/v4")
         v4Channel?.setMethodCallHandler { call, result -> handleV4Call(call, result) }
+
+        // Slice 5c: Flows runner channel (parallel surface to Sessions, not a
+        // replacement). Same sidestepping-pigeon pattern as v4.
+        flowsBridge = UseSenseFlowsBridge()
+        flowsChannel = MethodChannel(binding.binaryMessenger, "com.usesense.flutter/flows")
+        flowsChannel?.setMethodCallHandler { call, result ->
+            flowsBridge?.handle(call, result, activity)
+        }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         UseSenseHostApi.setUp(binding.binaryMessenger, null)
         v4Channel?.setMethodCallHandler(null)
         v4Channel = null
+        flowsChannel?.setMethodCallHandler(null)
+        flowsChannel = null
+        flowsBridge = null
         eventUnsubscribe?.invoke()
         eventUnsubscribe = null
         flutterApi = null
