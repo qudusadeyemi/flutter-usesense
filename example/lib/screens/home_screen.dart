@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,6 +14,10 @@ import 'result_screen.dart';
 const _kPrefsApiKey = 'api_key';
 const _kPrefsUseProduction = 'use_production';
 
+// Public API base for creating flow runs and for the SDK Flow runner. Sandbox
+// vs production is selected by the API key plus the x-environment header.
+const _kApiBase = 'https://api.usesense.ai';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.useSense});
 
@@ -24,6 +30,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _apiKeyController = TextEditingController();
   final _identityIdController = TextEditingController();
+  final _flowIdController = TextEditingController();
   final _events = <UseSenseEvent>[];
 
   bool _apiKeyVisible = false;
@@ -54,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _cancelledSub?.cancel();
     _apiKeyController.dispose();
     _identityIdController.dispose();
+    _flowIdController.dispose();
     super.dispose();
   }
 
@@ -170,6 +178,83 @@ class _HomeScreenState extends State<HomeScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Run an operator-authored Flow. Flows are token-based and do NOT use
+  /// `initialize()`: the host backend creates the run and returns flowRunId +
+  /// sdkToken. The example does that inline with the API key so a developer can
+  /// test a flow end to end, then hands the minted credentials to the runner.
+  Future<void> _runFlow() async {
+    final key = _apiKeyController.text.trim();
+    final flowId = _flowIdController.text.trim();
+    if (key.isEmpty) {
+      _showMessage('Enter your API key to run a flow.');
+      return;
+    }
+    if (flowId.isEmpty) {
+      _showMessage('Enter a Flow ID (looks like flw_...).');
+      return;
+    }
+
+    setState(() => _loading = true);
+    try {
+      final client = HttpClient();
+      String body;
+      int status;
+      try {
+        final req = await client.postUrl(Uri.parse('$_kApiBase/v1/flow-runs'));
+        req.headers.set('content-type', 'application/json');
+        req.headers.set('x-api-key', key);
+        req.headers
+            .set('x-environment', _useProduction ? 'production' : 'sandbox');
+        final payload = jsonEncode({
+          'flowId': flowId,
+          'subject': {'externalRef': 'flutter-demo-user'},
+          'mint_sdk_token': true,
+          'sdk_version': 'flutter-demo',
+        });
+        req.add(utf8.encode(payload));
+        final resp = await req.close();
+        status = resp.statusCode;
+        body = await resp.transform(utf8.decoder).join();
+      } finally {
+        client.close();
+      }
+      if (status < 200 || status >= 300) {
+        throw 'Could not create flow run (HTTP $status): $body';
+      }
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final runId = (json['flowRun'] as Map<String, dynamic>)['id'] as String;
+      final sdkToken = json['sdkToken'] as String?;
+      if (sdkToken == null) {
+        throw 'No sdkToken returned (mint_sdk_token).';
+      }
+
+      final result = await UseSenseFlows.instance.runFlow(
+        flowRunId: runId,
+        sdkToken: sdkToken,
+        apiBaseUrl: _kApiBase,
+      );
+      if (mounted) {
+        _showMessage(
+          'Flow ${result.state.name}'
+          '${result.outcome != null ? ' — ${result.outcome!.name}' : ''}',
+        );
+      }
+    } on FlowError catch (e) {
+      if (e.code == FlowErrorCode.cancelled) return; // user backed out
+      if (mounted) _showMessage('Flow failed: ${e.code.name} - ${e.message}');
+    } catch (e) {
+      if (mounted) _showMessage('Flow failed: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   void _showError(UseSenseError error) {
@@ -320,6 +405,31 @@ class _HomeScreenState extends State<HomeScreen> {
             FilledButton.tonal(
               onPressed: canInteract ? _startAuthentication : null,
               child: const Text('Authenticate'),
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+
+            // Run a Flow. Operator-authored multi-step flows (document + face,
+            // etc.). The example creates the run with your API key, then
+            // launches the native Flow runner.
+            Text('Run a Flow', style: theme.textTheme.titleSmall),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _flowIdController,
+              autocorrect: false,
+              enableSuggestions: false,
+              decoration: const InputDecoration(
+                labelText: 'Flow ID',
+                hintText: 'flw_...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: canInteract ? _runFlow : null,
+              icon: const Icon(Icons.account_tree),
+              label: const Text('Run a Flow'),
             ),
             const SizedBox(height: 16),
 
