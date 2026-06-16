@@ -79,6 +79,8 @@ class PigeonUseSenseConfig {
     this.baseUrl,
     this.branding,
     this.googleCloudProjectNumber,
+    this.antispoofOnDeviceEnabled = false,
+    this.liveSenseV4Enabled = false,
   });
 
   String apiKey;
@@ -86,6 +88,17 @@ class PigeonUseSenseConfig {
   String? baseUrl;
   PigeonBrandingConfig? branding;
   int? googleCloudProjectNumber;
+
+  /// Opt in to the on-device antispoof classifier (v4.2). When true the
+  /// platform channel forwards the flag to iOS / Android so the native
+  /// SDK runs the bundled CelebA-Spoof classifier locally. Defaults to false
+  /// -- the watchtower backend then runs the classifier server-side.
+  bool antispoofOnDeviceEnabled;
+
+  /// Opt the session into the LiveSense v4 capture flow. When true the
+  /// platform channel forwards the flag to iOS / Android so the native SDK
+  /// runs the constitutive zoom-motion phase and tags frames with phase.
+  bool liveSenseV4Enabled;
 }
 
 /// Request to start a verification session.

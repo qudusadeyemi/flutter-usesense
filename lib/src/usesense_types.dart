@@ -69,6 +69,8 @@ class UseSenseConfig {
     this.baseUrl,
     this.branding,
     this.googleCloudProjectNumber,
+    this.antispoofOnDeviceEnabled = false,
+    this.liveSenseV4Enabled = false,
   });
 
   /// Your UseSense API key.
@@ -85,6 +87,17 @@ class UseSenseConfig {
 
   /// Google Cloud project number for Play Integrity attestation (Android only).
   final int? googleCloudProjectNumber;
+
+  /// Opt in to the on-device antispoof classifier (v4.2). Defaults to false,
+  /// in which case the watchtower backend runs the classifier server-side.
+  /// When true the native layer loads the bundled CelebA-Spoof model and
+  /// attaches per-frame spoof probabilities to the uploaded metadata.
+  final bool antispoofOnDeviceEnabled;
+
+  /// Opt the session into the LiveSense v4 capture flow. When true the
+  /// native layer inserts a constitutive zoom-motion phase and sends the
+  /// `x-usesense-sdk-version: v4` header. Defaults to false.
+  final bool liveSenseV4Enabled;
 }
 
 /// A request to start a verification session.

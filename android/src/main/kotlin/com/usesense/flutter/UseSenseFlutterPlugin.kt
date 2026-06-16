@@ -190,6 +190,8 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
                 branding = brandingConfig,
                 googleCloudProjectNumber = config.googleCloudProjectNumber
                     ?: UseSenseConfig.DEFAULT_GOOGLE_CLOUD_PROJECT_NUMBER,
+                antispoofOnDeviceEnabled = config.antispoofOnDeviceEnabled,
+                liveSenseV4Enabled = config.liveSenseV4Enabled,
             )
             UseSense.initialize(ctx, nativeConfig)
 
