@@ -14,10 +14,10 @@ Pod::Spec.new do |s|
   s.source_files     = 'Classes/**/*'
 
   s.dependency 'Flutter'
-  # Native UseSense iOS SDK. Minimum version 4.2.2 — earlier 4.x versions
-  # had `Color.UseSense` theming issues and a terminal-screen centering
-  # bug that's fixed in 4.2.2.
-  s.dependency 'UseSenseSDK', '~> 4.2'
+  # Native UseSense iOS SDK. Minimum version 4.3.0 — the release that adds
+  # the V4 capture API (startV4Session / LiveSenseV4Config) and the Flows
+  # runner (UseSenseFlows.run) that this plugin's bridge calls into.
+  s.dependency 'UseSenseSDK', '~> 4.3'
 
   s.platform         = :ios, '16.0'
   s.swift_version    = '5.9'
