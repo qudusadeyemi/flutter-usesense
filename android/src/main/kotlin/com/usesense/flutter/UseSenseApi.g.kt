@@ -121,9 +121,11 @@ data class PigeonUseSenseConfig(
   val baseUrl: String? = null,
   val branding: PigeonBrandingConfig? = null,
   val googleCloudProjectNumber: Long? = null,
+  val antispoofOnDeviceEnabled: Boolean = false,
+  val liveSenseV4Enabled: Boolean = false,
 ) {
   fun toList(): List<Any?> {
-    return listOf(apiKey, environment.raw, baseUrl, branding?.toList(), googleCloudProjectNumber)
+    return listOf(apiKey, environment.raw, baseUrl, branding?.toList(), googleCloudProjectNumber, antispoofOnDeviceEnabled, liveSenseV4Enabled)
   }
 
   companion object {
@@ -134,6 +136,8 @@ data class PigeonUseSenseConfig(
         baseUrl = pigeonVar_list[2] as String?,
         branding = (pigeonVar_list[3] as List<Any?>?)?.let { PigeonBrandingConfig.fromList(it) },
         googleCloudProjectNumber = pigeonVar_list[4] as Long?,
+        antispoofOnDeviceEnabled = (pigeonVar_list.getOrNull(5) as? Boolean) ?: false,
+        liveSenseV4Enabled = (pigeonVar_list.getOrNull(6) as? Boolean) ?: false,
       )
     }
   }

@@ -138,9 +138,11 @@ struct PigeonUseSenseConfig {
   var baseUrl: String?
   var branding: PigeonBrandingConfig?
   var googleCloudProjectNumber: Int64?
+  var antispoofOnDeviceEnabled: Bool = false
+  var liveSenseV4Enabled: Bool = false
 
   func toList() -> [Any?] {
-    return [apiKey, environment.rawValue, baseUrl, branding?.toList(), googleCloudProjectNumber]
+    return [apiKey, environment.rawValue, baseUrl, branding?.toList(), googleCloudProjectNumber, antispoofOnDeviceEnabled, liveSenseV4Enabled]
   }
 
   static func fromList(_ pigeonVar_list: [Any?]) -> PigeonUseSenseConfig {
@@ -152,7 +154,9 @@ struct PigeonUseSenseConfig {
       environment: PigeonUseSenseEnvironment(rawValue: pigeonVar_list[1] as! Int)!,
       baseUrl: nilOrValue(pigeonVar_list[2]),
       branding: branding,
-      googleCloudProjectNumber: nilOrValue(pigeonVar_list[4])
+      googleCloudProjectNumber: nilOrValue(pigeonVar_list[4]),
+      antispoofOnDeviceEnabled: (pigeonVar_list.count > 5 ? pigeonVar_list[5] as? Bool : nil) ?? false,
+      liveSenseV4Enabled: (pigeonVar_list.count > 6 ? pigeonVar_list[6] as? Bool : nil) ?? false
     )
   }
 }

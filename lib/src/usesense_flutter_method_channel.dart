@@ -238,6 +238,8 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
             )
           : null,
       googleCloudProjectNumber: config.googleCloudProjectNumber,
+      antispoofOnDeviceEnabled: config.antispoofOnDeviceEnabled,
+      liveSenseV4Enabled: config.liveSenseV4Enabled,
     );
   }
 

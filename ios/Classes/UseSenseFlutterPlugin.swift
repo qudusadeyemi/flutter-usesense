@@ -124,11 +124,18 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
         // there's no `gatewayKey` on the native UseSenseConfig init and
         // the Pigeon interface no longer exposes one either (removed
         // in the 2.0.0 breaking change).
+        // v4.2/v4: Thread feature flags through to the native SDK.
+        let sdkOptions = SDKOptions(
+            antispoofOnDeviceEnabled: config.antispoofOnDeviceEnabled,
+            liveSenseV4Enabled: config.liveSenseV4Enabled
+        )
+
         let sdkConfig = UseSenseConfig(
             apiEndpoint: config.baseUrl ?? UseSenseConfig.defaultEndpoint,
             apiKey: config.apiKey,
             environment: environment,
-            branding: brandingConfig
+            branding: brandingConfig,
+            options: sdkOptions
         )
 
         nativeConfig = sdkConfig

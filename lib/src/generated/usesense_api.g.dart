@@ -96,6 +96,8 @@ class PigeonUseSenseConfig {
     this.baseUrl,
     this.branding,
     this.googleCloudProjectNumber,
+    this.antispoofOnDeviceEnabled = false,
+    this.liveSenseV4Enabled = false,
   });
 
   String apiKey;
@@ -103,6 +105,8 @@ class PigeonUseSenseConfig {
   String? baseUrl;
   PigeonBrandingConfig? branding;
   int? googleCloudProjectNumber;
+  bool antispoofOnDeviceEnabled;
+  bool liveSenseV4Enabled;
 
   Object encode() {
     return <Object?>[
@@ -111,6 +115,8 @@ class PigeonUseSenseConfig {
       baseUrl,
       branding?.encode(),
       googleCloudProjectNumber,
+      antispoofOnDeviceEnabled,
+      liveSenseV4Enabled,
     ];
   }
 
@@ -124,6 +130,10 @@ class PigeonUseSenseConfig {
           ? PigeonBrandingConfig.decode(result[3]! as List<Object?>)
           : null,
       googleCloudProjectNumber: result[4] as int?,
+      antispoofOnDeviceEnabled:
+          (result.length > 5 ? result[5] : null) as bool? ?? false,
+      liveSenseV4Enabled:
+          (result.length > 6 ? result[6] : null) as bool? ?? false,
     );
   }
 }

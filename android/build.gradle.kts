@@ -26,11 +26,10 @@ android {
 
 dependencies {
     // UseSense Android SDK — published to Maven Central at
-    // central.sonatype.com/artifact/ai.usesense/sdk. Pinned to ^4.2.1
-    // because that's the first release with the centering fix for the
-    // terminal verification screens and the proper vanniktech-based
-    // publish artifact shape with sources + javadoc JARs.
-    implementation("ai.usesense:sdk:4.2.1")
+    // central.sonatype.com/artifact/ai.usesense/sdk. Pinned to 4.3.0,
+    // the release that adds the V4 capture API + Flows runner (matches
+    // the iOS SDK 4.3.0 this plugin's podspec depends on).
+    implementation("ai.usesense:sdk:4.3.0")
 
     // Flutter embedding (provided by the Flutter build system)
     compileOnly("io.flutter:flutter_embedding_debug:1.0.0-")
