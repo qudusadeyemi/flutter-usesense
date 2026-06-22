@@ -42,29 +42,20 @@ flutter pub get
 
 ### iOS Setup
 
-The iOS SDK is distributed via CocoaPods. The plugin's podspec declares the dependency automatically. Ensure your `ios/Podfile` targets iOS 16.0+ **and uses static linkage** in the `Runner` target:
+The iOS SDK is distributed via CocoaPods. The plugin's podspec declares the dependency automatically. Ensure your `ios/Podfile` targets iOS 16.0+ (the default Flutter `use_frameworks!` is fine):
 
 ```ruby
 source 'https://cdn.cocoapods.org/'
 
 platform :ios, '16.0'
-
-target 'Runner' do
-  # Required: UseSenseSDK pulls in MediaPipe (on-device face mesh for the face
-  # liveness step), and MediaPipe ships static binaries. Plain `use_frameworks!`
-  # fails pod install with "transitive dependencies that include statically
-  # linked binaries".
-  use_frameworks! :linkage => :static
-  # ...flutter_install_all_ios_pods...
-end
 ```
 
-> **Why this matters:** face capture only records frames when face mesh detects a
-> face, so MediaPipe must be linked or the liveness step fails with **"No frames
+> **On-device face mesh:** face capture only records frames when face mesh detects
+> a face, so MediaPipe must be linked or the liveness step fails with **"No frames
 > captured."** As of UseSenseSDK 4.4.0 (pinned by this plugin) MediaPipe is
-> vendored and pulled in automatically — you do **not** add `MediaPipeTasksVision`
-> or any `pre_install` Info.plist patch hook. The only requirement is the
-> `:linkage => :static` line above.
+> vendored and pulled in automatically — you do **not** add `MediaPipeTasksVision`,
+> a `pre_install` Info.plist patch hook, or any linkage change. UseSenseSDK 4.4 is
+> a `static_framework`, so it works under the default `use_frameworks!`.
 
 Add camera and microphone usage descriptions to `ios/Runner/Info.plist`:
 
@@ -640,13 +631,7 @@ Run `cd ios && pod install` in your Flutter project. If the issue persists, try 
 
 ### iOS face step fails with "No frames captured"
 
-The face liveness step records frames only when on-device face mesh (MediaPipe) is linked. This means either the SDK is below 4.4.0, or `pod install` could not link MediaPipe. Fix:
-- Ensure the plugin (and therefore `UseSenseSDK >= 4.4.0`) is up to date: `flutter pub upgrade` then `cd ios && pod install`.
-- Ensure your `ios/Podfile` `Runner` target uses `use_frameworks! :linkage => :static` (see iOS Setup). Plain `use_frameworks!` cannot link MediaPipe's static binaries.
-
-### iOS `pod install` fails: "transitive dependencies that include statically linked binaries"
-
-Add `:linkage => :static` to `use_frameworks!` in your `Runner` target (see iOS Setup). MediaPipe (pulled in for face mesh) ships static binaries.
+The face liveness step records frames only when on-device face mesh (MediaPipe) is linked. MediaPipe is bundled with `UseSenseSDK >= 4.4.0`, so this almost always means the native SDK is below 4.4.0. Fix: ensure the plugin (and therefore `UseSenseSDK >= 4.4.0`) is up to date — `flutter pub upgrade`, then `cd ios && pod install` (try `pod repo update` first if it can't resolve `UseSenseMediaPipe`).
 
 ### Events not received
 
