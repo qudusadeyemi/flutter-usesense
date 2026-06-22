@@ -14,10 +14,15 @@ Pod::Spec.new do |s|
   s.source_files     = 'Classes/**/*'
 
   s.dependency 'Flutter'
-  # Native UseSense iOS SDK. Minimum version 4.3.0 — the release that adds
-  # the V4 capture API (startV4Session / LiveSenseV4Config) and the Flows
-  # runner (UseSenseFlows.run) that this plugin's bridge calls into.
-  s.dependency 'UseSenseSDK', '~> 4.3'
+  # Native UseSense iOS SDK. Minimum version 4.4.0 — vendors patched MediaPipe
+  # (UseSenseMediaPipe) so on-device face mesh works without a per-app pod +
+  # pre_install patch. Face capture needs face mesh, so on < 4.4 the liveness step
+  # fails with "No frames captured". 4.4 also carries the V4 capture API
+  # (startV4Session / LiveSenseV4Config) and the Flows runner (UseSenseFlows.run)
+  # this plugin's bridge calls into. The host app must use
+  # `use_frameworks! :linkage => :static` (MediaPipe ships static binaries) — see
+  # the README "iOS Setup" section.
+  s.dependency 'UseSenseSDK', '~> 4.4'
 
   s.platform         = :ios, '16.0'
   s.swift_version    = '5.9'
