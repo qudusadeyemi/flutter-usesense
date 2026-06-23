@@ -4,6 +4,18 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.2.1] - 2026-06-23
+
+### Fixed
+
+- **Android build failure.** Since 2.1.0 the Android bridge passed
+  `antispoofOnDeviceEnabled` + `liveSenseV4Enabled` to `UseSenseConfig`, but
+  those params shipped only on the iOS SDK — the pinned Android SDK
+  (`ai.usesense:sdk:4.3.0`) lacked them, so Android consumers failed to compile.
+  Bumped the Android SDK pin to `4.4.0`, which adds both params (and the
+  on-device antispoof + LiveSense v4 support) at iOS parity. iOS is unaffected
+  (the `~> 4.4` CocoaPods pin already resolves `UseSenseSDK 4.4.1`).
+
 ## [2.2.0] - 2026-06-23
 
 Pins the native iOS SDK to **4.4.0**, which makes on-device face mesh work out of
