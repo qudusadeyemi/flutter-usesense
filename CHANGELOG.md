@@ -4,6 +4,23 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.2.0] - 2026-06-23
+
+Pins the native iOS SDK to **4.4.0**, which makes on-device face mesh work out of
+the box. Additive and backward-compatible.
+
+### Fixed
+
+- **iOS face capture "No frames captured."** The face liveness step records frames
+  only when on-device face mesh (MediaPipe) is linked. UseSenseSDK 4.4.0 vendors
+  patched MediaPipe and pulls it in automatically — no per-app `MediaPipeTasksVision`
+  pod, `pre_install` Info.plist hook, or `:linkage => :static` change. Plain
+  `use_frameworks!` works (UseSenseSDK 4.4 is a `static_framework`).
+
+### Changed
+
+- iOS dependency pinned to `UseSenseSDK ~> 4.4` (was `~> 4.3`).
+
 ## [2.1.0] - 2026-06-16
 
 Tracks the native SDK 4.3.0 release. Additive and backward-compatible —
