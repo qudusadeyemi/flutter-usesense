@@ -4,6 +4,11 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.4.0] - 2026-06-28
+
+### Changed
+- Rebranded front-facing copy from UseSense to Sense.
+
 ## [2.3.0] - 2026-06-27
 
 ### Added
