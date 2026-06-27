@@ -4,6 +4,17 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.3.0] - 2026-06-27
+
+### Added
+- White-label `appearance` (FlowAppearance) and `copy` (FlowCopy) overrides, forwarded through the iOS and Android Flows bridges to `UseSenseFlows.run` so the verification flow's look and copy can be customised from the SDK or the dashboard.
+
+### Changed
+- Pinned UseSenseSDK to 4.5.0 (iOS `~> 4.5`, Android `ai.usesense:sdk:4.5.0`), which ships the appearance/copy API the bridge calls.
+
+### Fixed
+- Removed an invalid trailing comma in the iOS bridge's `UseSenseFlows.run(...)` call that would fail to compile on pre-Swift-6.1 toolchains.
+
 ## [2.2.1] - 2026-06-23
 
 ### Fixed
