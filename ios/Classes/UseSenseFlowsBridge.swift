@@ -56,7 +56,7 @@ final class UseSenseFlowsBridge: NSObject {
                 apiBaseURL: apiBaseURL,
                 appearance: appearance,
                 copy: copy,
-                from: presenter,
+                from: presenter
             ) { runResult in
                 switch runResult {
                 case .success(let r):
