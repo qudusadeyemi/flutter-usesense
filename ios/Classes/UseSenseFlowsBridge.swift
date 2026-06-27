@@ -37,10 +37,25 @@ final class UseSenseFlowsBridge: NSObject {
                 return
             }
 
+            // White-label overrides (Phase 1c / Phase 2). Each arrives as a
+            // camelCase dictionary that the native types decode; an absent or
+            // malformed map simply leaves the override nil so the runner falls
+            // back to server branding then built-in defaults.
+            var appearance: FlowAppearance? = nil
+            if let appearanceMap = args["appearance"] as? [String: Any] {
+                appearance = FlowAppearance.decodeFromJSONObject(appearanceMap)
+            }
+            var copy: FlowCopy? = nil
+            if let copyMap = args["copy"] as? [String: Any] {
+                copy = FlowCopy.decodeFromJSONObject(copyMap)
+            }
+
             UseSenseFlows.run(
                 flowRunId: flowRunId,
                 sdkToken: sdkToken,
                 apiBaseURL: apiBaseURL,
+                appearance: appearance,
+                copy: copy,
                 from: presenter,
             ) { runResult in
                 switch runResult {
