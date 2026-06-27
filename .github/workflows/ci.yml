@@ -68,13 +68,30 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Regenerate the example's iOS platform
+      - name: Regenerate the example's iOS platform + set deployment target
         # example/ios is gitignored (example/.gitignore), so the Runner project and
-        # Podfile are not committed -- regenerate them. `flutter build ios` then runs
-        # pod install, resolving the plugin's UseSenseSDK `~> 4.x` pin fresh from
-        # CocoaPods (no committed lock to drift).
-        run: flutter create --platforms=ios .
+        # Podfile are not committed -- regenerate them. flutter create scaffolds a
+        # lower default iOS target, but the plugin podspec requires iOS 16.0, so set
+        # the Podfile platform before pod install (otherwise pod install fails with a
+        # deployment-target mismatch). --config-only generates the Podfile + xcconfig
+        # without compiling; the next step then builds (pod install resolves the
+        # UseSenseSDK ~> 4.x pin fresh from CocoaPods, no committed lock to drift).
         working-directory: example
+        run: |
+          flutter create --platforms=ios .
+          flutter pub get
+          # --config-only generates the Podfile but also runs pod install, which fails
+          # on the default low platform. Tolerate that (|| true) -- the Podfile is
+          # written before the failure -- then pin the platform so the REAL build below
+          # resolves. Pods read the Podfile platform; the Runner app target reads its
+          # own IPHONEOS_DEPLOYMENT_TARGET in the xcodeproj, so set BOTH to 16.0.
+          flutter build ios --no-codesign --config-only || true
+          sed -i '' "s/# *platform :ios.*/platform :ios, '16.0'/" ios/Podfile
+          # UseSenseSDK vendors a static xcframework (MediaPipe), which Flutter's
+          # default dynamic use_frameworks! rejects. Force static linkage (matches
+          # the maintained example Podfile).
+          sed -i '' "s/use_frameworks!.*/use_frameworks! :linkage => :static/" ios/Podfile
+          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/Runner.xcodeproj/project.pbxproj
 
       - name: Build iOS example
         run: flutter build ios --no-codesign --debug
