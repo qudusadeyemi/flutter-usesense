@@ -18,6 +18,8 @@ library;
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 
+import 'flow_appearance.dart';
+
 /// Server-driven flow run state. Host apps see only the terminal ones via
 /// [FlowRunResult].
 enum FlowRunState {
@@ -166,10 +168,17 @@ class UseSenseFlows {
   /// [FlowRunResult] when the run reaches a terminal state (completed,
   /// cancelled, errored, abandoned). Throws [FlowError] on transport / token /
   /// unsupported-action faults.
+  ///
+  /// Optional [appearance] (visual theming) and [copy] (subject-facing strings)
+  /// supply SDK-init white-label overrides. The native runner merges them
+  /// SDK-init > server(branding) > built-in default, so anything omitted falls
+  /// back to the operator's dashboard branding then the built-in tokens.
   Future<FlowRunResult> runFlow({
     required String flowRunId,
     required String sdkToken,
     String apiBaseUrl = 'https://api.usesense.ai',
+    FlowAppearance? appearance,
+    FlowCopy? copy,
   }) async {
     try {
       final result = await _channel.invokeMapMethod<dynamic, dynamic>(
@@ -178,6 +187,8 @@ class UseSenseFlows {
           'flowRunId': flowRunId,
           'sdkToken': sdkToken,
           'apiBaseUrl': apiBaseUrl,
+          if (appearance != null) 'appearance': appearance.toMap(),
+          if (copy != null) 'copy': copy.toMap(),
         },
       );
       if (result == null) {

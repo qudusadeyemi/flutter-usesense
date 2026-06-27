@@ -43,3 +43,26 @@ export 'src/flows.dart'
         FlowRunResult,
         FlowRunState,
         UseSenseFlows;
+
+// White-label customization for the Flows runner (appearance + copy).
+export 'src/flow_appearance.dart'
+    show
+        AppearanceBackground,
+        AppearanceColors,
+        AppearanceIcons,
+        AppearanceLoader,
+        AppearanceLogo,
+        AppearanceShape,
+        AppearanceTypography,
+        ButtonsCopy,
+        DocumentCopy,
+        ErrorsCopy,
+        FaceCopy,
+        FlowAppearance,
+        FlowCopy,
+        FormCopy,
+        IdNumberCopy,
+        LoadingCopy,
+        PrivacyCopy,
+        ResultCopy,
+        WelcomeCopy;

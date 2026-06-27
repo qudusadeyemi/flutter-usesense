@@ -3,6 +3,8 @@ package com.usesense.flutter
 import android.app.Activity
 import android.os.Handler
 import android.os.Looper
+import com.usesense.sdk.flows.FlowAppearance
+import com.usesense.sdk.flows.FlowCopy
 import com.usesense.sdk.flows.FlowError
 import com.usesense.sdk.flows.FlowOutcome
 import com.usesense.sdk.flows.FlowRunResult
@@ -11,6 +13,7 @@ import com.usesense.sdk.flows.FlowsCallback
 import com.usesense.sdk.flows.UseSenseFlows
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import org.json.JSONObject
 
 /**
  * MethodChannel bridge for the Flows runner. Sits alongside the existing
@@ -38,6 +41,16 @@ class UseSenseFlowsBridge {
                     return
                 }
 
+                // White-label overrides (Phase 1c / Phase 2). Each arrives as a
+                // camelCase Map that the native FlowAppearance/FlowCopy decoders
+                // accept (they read camelCase and snake_case). A null or
+                // malformed map leaves the override null so the runner falls back
+                // to server branding then built-in defaults.
+                val appearance = (call.argument<Map<String, Any?>>("appearance"))
+                    ?.let { runCatching { FlowAppearance.decode(JSONObject(it)) }.getOrNull() }
+                val copy = (call.argument<Map<String, Any?>>("copy"))
+                    ?.let { runCatching { FlowCopy.decode(JSONObject(it)) }.getOrNull() }
+
                 val callback = object : FlowsCallback {
                     override fun onResult(r: FlowRunResult) {
                         mainHandler.post {
@@ -64,6 +77,8 @@ class UseSenseFlowsBridge {
                     sdkToken = sdkToken,
                     callback = callback,
                     apiBaseUrl = apiBaseUrl,
+                    appearance = appearance,
+                    copy = copy,
                 )
             }
             else -> result.notImplemented()
