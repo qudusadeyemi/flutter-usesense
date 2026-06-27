@@ -21,7 +21,7 @@ Pod::Spec.new do |s|
   # V4 capture API (startV4Session / LiveSenseV4Config) and the Flows runner
   # (UseSenseFlows.run) this plugin's bridge calls into. UseSenseSDK 4.4 is a
   # static_framework, so it works under the default `use_frameworks!`.
-  s.dependency 'UseSenseSDK', '~> 4.4'
+  s.dependency 'UseSenseSDK', '~> 4.5'
 
   s.platform         = :ios, '16.0'
   s.swift_version    = '5.9'
