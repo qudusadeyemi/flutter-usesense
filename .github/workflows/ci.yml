@@ -87,6 +87,10 @@ jobs:
           # own IPHONEOS_DEPLOYMENT_TARGET in the xcodeproj, so set BOTH to 16.0.
           flutter build ios --no-codesign --config-only || true
           sed -i '' "s/# *platform :ios.*/platform :ios, '16.0'/" ios/Podfile
+          # UseSenseSDK vendors a static xcframework (MediaPipe), which Flutter's
+          # default dynamic use_frameworks! rejects. Force static linkage (matches
+          # the maintained example Podfile).
+          sed -i '' "s/use_frameworks!.*/use_frameworks! :linkage => :static/" ios/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/Runner.xcodeproj/project.pbxproj
 
       - name: Build iOS example
