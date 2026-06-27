@@ -80,10 +80,12 @@ jobs:
         run: |
           flutter create --platforms=ios .
           flutter pub get
-          flutter build ios --no-codesign --config-only
-          # Pods read the Podfile platform; the Runner app target reads its own
-          # IPHONEOS_DEPLOYMENT_TARGET in the xcodeproj. Set BOTH to 16.0 so neither
-          # the pod resolution nor the app/plugin link fails on the version mismatch.
+          # --config-only generates the Podfile but also runs pod install, which fails
+          # on the default low platform. Tolerate that (|| true) -- the Podfile is
+          # written before the failure -- then pin the platform so the REAL build below
+          # resolves. Pods read the Podfile platform; the Runner app target reads its
+          # own IPHONEOS_DEPLOYMENT_TARGET in the xcodeproj, so set BOTH to 16.0.
+          flutter build ios --no-codesign --config-only || true
           sed -i '' "s/# *platform :ios.*/platform :ios, '16.0'/" ios/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/Runner.xcodeproj/project.pbxproj
 
