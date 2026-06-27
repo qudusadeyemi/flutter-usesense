@@ -1,4 +1,4 @@
-# UseSense Flutter Integration Guide
+# Sense Flutter Integration Guide
 
 This guide covers how the `usesense_flutter` plugin works end-to-end, from
 SDK initialization through webhook verification on your backend. It is written
@@ -24,7 +24,7 @@ A verification session proceeds through the following steps:
 
 1. **Initialize the SDK.** Create a `UseSenseFlutter` instance and call
    `initialize()` with your API key. This loads native resources, contacts
-   the UseSense API to validate your key, and prepares the camera pipeline.
+   the Sense API to validate your key, and prepares the camera pipeline.
    Initialization only needs to happen once per app lifecycle.
 
    ```dart
@@ -76,7 +76,7 @@ A verification session proceeds through the following steps:
 
 4. **SDK captures biometric data.** The native SDK records video frames,
    runs the liveness challenge, collects device integrity signals, and
-   uploads everything to the UseSense API. Events stream back through
+   uploads everything to the Sense API. Events stream back through
    `onEvent` during this process (`captureStarted`, `uploadProgress`,
    `completeStarted`, etc.).
 
@@ -112,7 +112,7 @@ A verification session proceeds through the following steps:
    }
    ```
 
-7. **UseSense API delivers a signed webhook to your backend.** This is the
+7. **Sense API delivers a signed webhook to your backend.** This is the
    definitive verdict. The webhook payload includes full scores, the
    decision, and an HMAC-SHA256 signature. Your backend verifies the
    signature and updates the user's status in your database.
@@ -134,7 +134,7 @@ Sessions expire after **15 minutes** if not completed.
 ## 2. Sequence Diagram
 
 ```
- Your Flutter App          usesense_flutter           UseSense API            Your Backend
+ Your Flutter App          usesense_flutter           Sense API               Your Backend
        |                   (Dart -> Native)                |                       |
        |                        |                          |                       |
   [1]  |-- initialize() ------>|                          |                       |
@@ -193,7 +193,7 @@ Key points in this flow:
 
 ## 3. Why Three Independent Pillars?
 
-UseSense evaluates every session across three independent pillars. Each
+Sense evaluates every session across three independent pillars. Each
 pillar produces its own score (0--100), and all three must pass for the
 session to be approved. This is a **weakest-link** model: a perfect score
 on two pillars cannot compensate for a failure on the third.
@@ -631,7 +631,7 @@ only.
 
 ### 5.1 Configure Your Webhook Endpoint
 
-1. Log in to the [UseSense Dashboard](https://dashboard.usesense.co).
+1. Log in to the [Sense Dashboard](https://dashboard.usesense.co).
 2. Navigate to **Settings > Webhooks**.
 3. Click **Add Endpoint**.
 4. Enter your endpoint URL (e.g., `https://api.yourapp.com/webhooks/usesense`).
@@ -643,7 +643,7 @@ only.
 
 ### 5.2 Webhook Payload Structure
 
-When a session completes, UseSense sends a `POST` request to your endpoint
+When a session completes, Sense sends a `POST` request to your endpoint
 with the following JSON body:
 
 ```json
@@ -883,7 +883,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 
 - **Always verify the signature.** Never process an unverified payload.
 - **Respond with 2xx quickly.** Do heavy processing asynchronously.
-  UseSense will retry on non-2xx responses.
+  Sense will retry on non-2xx responses.
 - **Handle idempotency.** Use `session_id` as an idempotency key. The same
   webhook may be delivered more than once.
 - **Use HTTPS.** Your webhook endpoint must be reachable over HTTPS with a
@@ -909,12 +909,12 @@ Google Play.
   endpoint). Never commit API keys to version control.
 
 - [ ] **3. Verify you have sufficient session credits.** Check your
-  remaining session credits in the UseSense Dashboard under
+  remaining session credits in the Sense Dashboard under
   **Billing > Usage**. Production sessions consume credits. Set up billing
   alerts to avoid service interruptions.
 
 - [ ] **4. Configure your production webhook endpoint.** Add your
-  production webhook URL in the UseSense Dashboard. Ensure it is
+  production webhook URL in the Sense Dashboard. Ensure it is
   reachable over HTTPS with a valid TLS certificate. Test it with the
   dashboard's "Send Test Event" feature.
 
@@ -961,7 +961,7 @@ happens), use the remote flow methods:
 
 ```dart
 // Remote enrollment -- your backend creates the enrollment via the
-// UseSense Server API and passes the ID to the client.
+// Sense Server API and passes the ID to the client.
 final result = await useSense.startRemoteEnrollment('ren_abc123');
 
 // Remote verification -- same pattern.

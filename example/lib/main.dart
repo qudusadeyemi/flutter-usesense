@@ -24,7 +24,7 @@ class UseSenseExampleApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'UseSense Example',
+      title: 'Sense Example',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorSchemeSeed: const Color(0xFF4F7CFF),

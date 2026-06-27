@@ -1,8 +1,8 @@
 # usesense_flutter
 
-Flutter plugin for [UseSense](https://usesense.ai) human presence verification. Wraps native iOS and Android SDKs via [Pigeon](https://pub.dev/packages/pigeon) type-safe platform channels.
+Flutter plugin for [Sense](https://usesense.ai) human presence verification. Wraps native iOS and Android SDKs via [Pigeon](https://pub.dev/packages/pigeon) type-safe platform channels.
 
-UseSense verifies human presence through three pillars:
+Sense verifies human presence through three pillars:
 
 - **DeepSense** -- Device and channel integrity (attestation, runtime integrity, capture pipeline analysis)
 - **LiveSense** -- Multimodal liveness detection (facial dynamics, visual integrity, presentation attack detection, audio authenticity)
@@ -61,9 +61,9 @@ Add camera and microphone usage descriptions to `ios/Runner/Info.plist`:
 
 ```xml
 <key>NSCameraUsageDescription</key>
-<string>UseSense requires camera access for identity verification.</string>
+<string>Sense requires camera access for identity verification.</string>
 <key>NSMicrophoneUsageDescription</key>
-<string>UseSense requires microphone access for audio-based liveness challenges.</string>
+<string>Sense requires microphone access for audio-based liveness challenges.</string>
 ```
 
 Then install pods:
@@ -143,7 +143,7 @@ useSense.dispose();
 The verification flow UI is fully customizable through two optional inputs you pass
 on a flow run: `appearance` (`FlowAppearance`) and `copy` (`FlowCopy`). Values are
 merged **SDK-init > dashboard (org settings) > built-in default**. Every field is
-optional; anything you omit keeps the UseSense default.
+optional; anything you omit keeps the Sense default.
 
 You can set this two ways: in code (below), or no-code via the dashboard's
 **Flows → Appearance** tab (saved on your org, delivered to every SDK and the hosted
@@ -195,7 +195,7 @@ await useSense.initialize(
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `apiKey` | `String` | **required** | Your UseSense API key. Production keys start with `pk_prod_*` / `sk_prod_*`; sandbox keys start with `pk_sandbox_*` / `sk_sandbox_*` / `dk_*`. |
+| `apiKey` | `String` | **required** | Your Sense API key. Production keys start with `pk_prod_*` / `sk_prod_*`; sandbox keys start with `pk_sandbox_*` / `sk_sandbox_*` / `dk_*`. |
 | `environment` | `UseSenseEnvironment` | `.auto` | Backend environment. `.auto` detects from the key prefix. |
 | `baseUrl` | `String?` | `null` | Override the default backend URL. Useful for on-premise deployments and staging. |
 | `branding` | `BrandingConfig?` | `null` | UI customization for the verification screen. |
@@ -224,7 +224,7 @@ await useSense.initialize(
 
 ## Session Types
 
-UseSense supports two session types: **enrollment** (registering a new identity) and **authentication** (verifying a returning user).
+Sense supports two session types: **enrollment** (registering a new identity) and **authentication** (verifying a returning user).
 
 ### Enrollment
 
@@ -482,7 +482,7 @@ try {
 
 1. The SDK returns a `UseSenseResult` to your Flutter app with a preliminary `decision`.
 2. Your app shows appropriate UI feedback (success, rejection, or pending review).
-3. UseSense sends a webhook `POST` request to your configured endpoint with the full session result, including scores and risk signals.
+3. Sense sends a webhook `POST` request to your configured endpoint with the full session result, including scores and risk signals.
 4. Your backend verifies the webhook signature and applies the final access-control decision.
 
 ### Webhook Payload Structure

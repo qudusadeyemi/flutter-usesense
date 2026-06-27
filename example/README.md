@@ -1,4 +1,4 @@
-# UseSense Flutter Example
+# Sense Flutter Example
 
 Demonstrates plugin initialization, enrollment, authentication, event listening,
 and error handling.

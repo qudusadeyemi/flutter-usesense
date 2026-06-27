@@ -286,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('UseSense Example'),
+        title: const Text('Sense Example'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
