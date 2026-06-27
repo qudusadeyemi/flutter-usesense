@@ -68,13 +68,20 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Regenerate the example's iOS platform
+      - name: Regenerate the example's iOS platform + set deployment target
         # example/ios is gitignored (example/.gitignore), so the Runner project and
-        # Podfile are not committed -- regenerate them. `flutter build ios` then runs
-        # pod install, resolving the plugin's UseSenseSDK `~> 4.x` pin fresh from
-        # CocoaPods (no committed lock to drift).
-        run: flutter create --platforms=ios .
+        # Podfile are not committed -- regenerate them. flutter create scaffolds a
+        # lower default iOS target, but the plugin podspec requires iOS 16.0, so set
+        # the Podfile platform before pod install (otherwise pod install fails with a
+        # deployment-target mismatch). --config-only generates the Podfile + xcconfig
+        # without compiling; the next step then builds (pod install resolves the
+        # UseSenseSDK ~> 4.x pin fresh from CocoaPods, no committed lock to drift).
         working-directory: example
+        run: |
+          flutter create --platforms=ios .
+          flutter pub get
+          flutter build ios --no-codesign --config-only
+          sed -i '' "s/# *platform :ios.*/platform :ios, '16.0'/" ios/Podfile
 
       - name: Build iOS example
         run: flutter build ios --no-codesign --debug
