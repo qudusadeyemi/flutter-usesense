@@ -29,7 +29,7 @@ dependencies {
     // central.sonatype.com/artifact/ai.usesense/sdk. Pinned to 4.3.0,
     // the release that adds the V4 capture API + Flows runner (matches
     // the iOS SDK 4.3.0 this plugin's podspec depends on).
-    implementation("ai.usesense:sdk:4.5.0")
+    implementation("ai.usesense:sdk:4.6.0")
 
     // Flutter embedding (provided by the Flutter build system)
     compileOnly("io.flutter:flutter_embedding_debug:1.0.0-")

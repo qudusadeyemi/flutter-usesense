@@ -4,6 +4,11 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.4.1] - 2026-06-28
+
+### Changed
+- Pinned the native SDK to 4.6.0 (Sense rebrand): iOS `UseSenseSDK ~> 4.6`, Android `ai.usesense:sdk:4.6.0`. Previously Android was hard-pinned to 4.5.0.
+
 ## [2.4.0] - 2026-06-28
 
 ### Changed
