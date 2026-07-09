@@ -4,6 +4,11 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.4.2] - 2026-07-09
+
+### Fixed
+- **Android release builds failing to resolve the Flutter embedding.** `android/build.gradle.kts` hardcoded `compileOnly("io.flutter:flutter_embedding_debug:1.0.0-…")`, which pinned a fixed Flutter engine hash and the *debug* variant into every consumer's build. Any app whose Flutter SDK differed from the one used to cut the plugin (i.e. effectively all of them) failed with `Could not resolve io.flutter:flutter_embedding_debug … inconsistent module metadata found … bad version: expected=… found=…`, and the debug embedding leaked into release compiles (`compileReleaseKotlin` on `releaseCompileClasspath`). Removed the hardcoded dependency — the Flutter Gradle plugin already injects `flutter_embedding_<buildMode>` as an `api` dependency of every plugin subproject at the consuming app's engine version and matching build variant, so the embedding API classes remain on the compile classpath. No API or runtime behaviour change.
+
 ## [2.4.1] - 2026-06-28
 
 ### Changed
