@@ -31,6 +31,14 @@ dependencies {
     // the iOS SDK 4.3.0 this plugin's podspec depends on).
     implementation("ai.usesense:sdk:4.6.0")
 
-    // Flutter embedding (provided by the Flutter build system)
-    compileOnly("io.flutter:flutter_embedding_debug:1.0.0-")
+    // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
+    // Gradle plugin injects it into every plugin subproject at build time
+    // (PluginHandler.addApiDependencies -> "io.flutter:flutter_embedding_
+    // $buildMode:1.0.0-$engineVersion"), pinned to the *consuming app's*
+    // engine version and the matching build variant (debug/profile/release).
+    // Hardcoding a coordinate here pins a fixed engine hash + the debug
+    // variant, which breaks any integrator whose Flutter SDK differs from ours
+    // ("inconsistent module metadata found ... bad version") and leaks the
+    // debug embedding into release builds. The embedding API classes are on
+    // the compile classpath via that injection.
 }
