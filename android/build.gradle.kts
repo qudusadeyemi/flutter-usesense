@@ -18,9 +18,18 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+}
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+// Kotlin JVM target lives in the top-level `kotlin {}` block, NOT inside
+// `android { kotlinOptions { ... } }`. Newer Kotlin Gradle plugins (shipped
+// with recent stable Flutter) mark `kotlinOptions`/`jvmTarget` as
+// deprecation-level ERROR, and having `kotlinOptions` inside `android {}` also
+// forces the `android` accessor to resolve to the deprecated LibraryExtension
+// type — both become hard script-compilation errors. The compilerOptions DSL
+// is the forward-compatible form.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 

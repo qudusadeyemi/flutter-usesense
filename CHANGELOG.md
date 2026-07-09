@@ -4,6 +4,11 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.4.3] - 2026-07-09
+
+### Fixed
+- **Android build failing to compile `android/build.gradle.kts` on recent stable Flutter.** The module used the legacy `android { kotlinOptions { jvmTarget = … } }` DSL. Newer Kotlin Gradle plugins (bundled with current stable Flutter) mark `kotlinOptions`/`jvmTarget` as deprecation-level *ERROR*, and nesting `kotlinOptions` inside `android {}` also forces the `android` accessor to resolve to the deprecated `LibraryExtension` type — so the script failed to compile with three errors before dependency resolution even started (`assembleRelease` → "Script compilation errors: 3 errors"). Migrated the Kotlin JVM target to the top-level `kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }` DSL. This is what the release-build CI guard added in 2.4.2 surfaced. No API or runtime change.
+
 ## [2.4.2] - 2026-07-09
 
 ### Fixed
