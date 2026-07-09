@@ -96,3 +96,48 @@ jobs:
       - name: Build iOS example
         run: flutter build ios --no-codesign --debug
         working-directory: example
+
+  build-android:
+    name: Build Android Example (release)
+    # Compiles the example app (and therefore the plugin's Android module,
+    # :usesense_flutter) in the RELEASE variant. This is the guard for the class
+    # of failure fixed in 2.4.2: android/build.gradle.kts must not hardcode a
+    # Flutter engine hash (io.flutter:flutter_embedding_*:1.0.0-<hash>). A pinned
+    # hash resolves against the CI runner's own Flutter engine and fails with
+    # "inconsistent module metadata found ... bad version", and a pinned debug
+    # variant leaks into release. `flutter analyze` is Dart-only and can't catch
+    # this -- only a real Android compile does. Release specifically, because the
+    # original break was on :usesense_flutter:compileReleaseKotlin.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        # The plugin's android module targets Java 17 (source/targetCompatibility
+        # VERSION_17). Pin the JDK so the AGP toolchain is deterministic rather
+        # than relying on whatever the runner image defaults to.
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Regenerate the example's Android platform
+        # example/android is gitignored (example/.gitignore), so the Gradle
+        # project is not committed -- regenerate it. The generated release
+        # buildType signs with the debug keys (flutter create's default), so no
+        # keystore is needed to exercise the release compile.
+        working-directory: example
+        run: |
+          flutter create --platforms=android .
+          flutter pub get
+
+      - name: Build Android example (release)
+        run: flutter build apk --release
+        working-directory: example
