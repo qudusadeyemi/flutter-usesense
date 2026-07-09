@@ -4,6 +4,11 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.4.4] - 2026-07-09
+
+### Fixed
+- **Android release builds failing at manifest merge on AGP 8.x** (`Namespace 'org.tensorflow.lite' is used in multiple modules and/or libraries`). Bumped the native SDK pin `ai.usesense:sdk` `4.6.0` → `4.6.1`, which upgrades TensorFlow Lite to 2.16.1 (fixing the duplicate-namespace collision between `tensorflow-lite` and its transitive `tensorflow-lite-api`) and drops the unused `tensorflow-lite-support`. Integrators no longer need a `resolutionStrategy`/`exclude` workaround in their app. No API or runtime change.
+
 ## [2.4.3] - 2026-07-09
 
 ### Fixed
