@@ -20,7 +20,7 @@ Sense verifies human presence through three pillars:
 | Dart | 3.2+ |
 | iOS | 16.0+ |
 | Xcode | 15.0+ |
-| Android | API 24 (Android 7.0) |
+| Android | API 28+ (Android 9.0; native SDK requires API 28) |
 | Hardware | Front-facing camera |
 
 ---
@@ -31,7 +31,7 @@ Add `usesense_flutter` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  usesense_flutter: ^1.0.0
+  usesense_flutter: ^2.4.4
 ```
 
 Then run:
@@ -79,6 +79,20 @@ The native Android SDK is published to Maven Central at `ai.usesense:sdk`.
 `android/build.gradle.kts` by default, so no custom repository
 declaration is required. The Flutter plugin pulls the native dep
 transitively when you run `flutter pub get`.
+
+> **Minimum SDK — required.** The native `ai.usesense:sdk` requires
+> `minSdk 28` (Android 9.0). Set it in your app's `android/app/build.gradle`
+> (or `build.gradle.kts`); a lower value fails the Android **release** build at
+> manifest merge with `uses-sdk:minSdkVersion … cannot be smaller than version 28
+> declared in library [ai.usesense:sdk]`:
+>
+> ```groovy
+> android {
+>     defaultConfig {
+>         minSdkVersion 28
+>     }
+> }
+> ```
 
 If for some reason `mavenCentral()` has been removed from your
 `android/build.gradle.kts`, add it back:
