@@ -133,10 +133,17 @@ jobs:
         # project is not committed -- regenerate it. The generated release
         # buildType signs with the debug keys (flutter create's default), so no
         # keystore is needed to exercise the release compile.
+        #
+        # Force the app minSdk to 28: the native ai.usesense:sdk requires
+        # minSdk 28, so a consuming app on flutter's lower default fails the
+        # release manifest merge ("uses-sdk:minSdkVersion 24 cannot be smaller
+        # than version 28 declared in library [ai.usesense:sdk]"). Integrators
+        # must do the same in their own app/build.gradle -- this mirrors that.
         working-directory: example
         run: |
           flutter create --platforms=android .
           flutter pub get
+          sed -i -E 's/minSdk(Version)? *=? *[a-zA-Z0-9_.().]+/minSdk = 28/' android/app/build.gradle.kts
 
       - name: Build Android example (release)
         run: flutter build apk --release

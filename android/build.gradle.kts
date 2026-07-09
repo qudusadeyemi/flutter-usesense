@@ -11,7 +11,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        minSdk = 24
+        // 28, matching the native ai.usesense:sdk requirement (minSdk 28 since
+        // SDK v4.1). Declaring a lower value here is dishonest — the release
+        // manifest merge fails against the SDK's own minSdk. Consuming apps must
+        // therefore also set minSdkVersion 28.
+        minSdk = 28
     }
 
     compileOptions {
