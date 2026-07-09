@@ -4,6 +4,11 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.4.5] - 2026-07-09
+
+### Changed
+- Bumped the native SDK pin `ai.usesense:sdk` `4.6.1` → `4.6.4`, aligning the Flutter plugin with the React Native package on a single native SDK version. 4.6.2–4.6.4 were consumability fixes for Kotlin <2.2 toolchains (React Native); Flutter's toolchain is Kotlin ≥2.2 so it was already unaffected, but 4.6.4 is strictly more compatible (lower Kotlin metadata, no unused viewBinding) and keeps the wrappers consistent. No API or runtime change.
+
 ## [2.4.4] - 2026-07-09
 
 ### Fixed
