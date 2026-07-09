@@ -11,7 +11,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        minSdk = 24
+        // 28, matching the native ai.usesense:sdk requirement (minSdk 28 since
+        // SDK v4.1). Declaring a lower value here is dishonest — the release
+        // manifest merge fails against the SDK's own minSdk. Consuming apps must
+        // therefore also set minSdkVersion 28.
+        minSdk = 28
     }
 
     compileOptions {
@@ -38,7 +42,7 @@ dependencies {
     // central.sonatype.com/artifact/ai.usesense/sdk. Pinned to 4.3.0,
     // the release that adds the V4 capture API + Flows runner (matches
     // the iOS SDK 4.3.0 this plugin's podspec depends on).
-    implementation("ai.usesense:sdk:4.6.0")
+    implementation("ai.usesense:sdk:4.6.1")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time
