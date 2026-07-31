@@ -39,10 +39,12 @@ kotlin {
 
 dependencies {
     // UseSense Android SDK — published to Maven Central at
-    // central.sonatype.com/artifact/ai.usesense/sdk. Pinned to 4.3.0,
-    // the release that adds the V4 capture API + Flows runner (matches
-    // the iOS SDK 4.3.0 this plugin's podspec depends on).
-    implementation("ai.usesense:sdk:4.6.4")
+    // central.sonatype.com/artifact/ai.usesense/sdk. 4.6.5 is the floor:
+    // earlier builds could hang forever on "Finalizing Enrollment" because
+    // the Play Integrity token request had no timeout and the signal upload
+    // joined it unbounded, wedging the verification before a single request
+    // was sent. Anything below this strands subjects on Android.
+    implementation("ai.usesense:sdk:4.6.5")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time

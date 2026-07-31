@@ -21,7 +21,10 @@ Pod::Spec.new do |s|
   # V4 capture API (startV4Session / LiveSenseV4Config) and the Flows runner
   # (UseSenseFlows.run) this plugin's bridge calls into. UseSenseSDK 4.4 is a
   # static_framework, so it works under the default `use_frameworks!`.
-  s.dependency 'UseSenseSDK', '~> 4.6'
+  # 4.6.1 is the floor: earlier 4.6.x tore the runner down on a failed
+  # document upload, ejecting the subject mid-flow, and cancelling the
+  # scanner or photo picker cancelled the whole verification.
+  s.dependency 'UseSenseSDK', '~> 4.6.1'
 
   s.platform         = :ios, '16.0'
   s.swift_version    = '5.9'
