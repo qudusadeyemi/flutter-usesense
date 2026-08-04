@@ -44,7 +44,11 @@ dependencies {
     // the Play Integrity token request had no timeout and the signal upload
     // joined it unbounded, wedging the verification before a single request
     // was sent. Anything below this strands subjects on Android.
-    implementation("ai.usesense:sdk:4.6.5")
+    // 4.6.6 is the floor: below it an upload that arrived incomplete was
+    // reported as `provider`, so the runner told a subject holding a perfectly
+    // good document that verification was "temporarily unavailable" and
+    // offered a retry that re-sent identical bytes.
+    implementation("ai.usesense:sdk:4.6.6")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time
