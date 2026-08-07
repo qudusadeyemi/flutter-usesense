@@ -51,7 +51,15 @@ dependencies {
     // 4.6.7 is the floor: from it the runner reports whether the subject
     // scanned the document or chose a file, so failure guidance can name an
     // action they can actually take. Below it the server guesses from config.
-    implementation("ai.usesense:sdk:4.6.7")
+    // 4.7.0 is the floor: below it frames_manifest reported a hardcoded
+    // 640x480 regardless of what was captured. That is right for the legacy
+    // path but wrong for v4, which captures 1280x720, and the server now
+    // scales its screen-replay sharpness thresholds off that value, so
+    // under-reporting made spoof detection more permissive on the better
+    // capture path. 4.7.0 reports the real encoded size, caps frames at 960,
+    // gzips the metadata, raises the 30s upload write timeout to 300s, and
+    // emits real upload progress.
+    implementation("ai.usesense:sdk:4.7.0")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time
