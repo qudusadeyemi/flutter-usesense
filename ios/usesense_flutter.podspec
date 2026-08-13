@@ -42,7 +42,7 @@ Pod::Spec.new do |s|
   #
   # Note `~> 4.7.0` means >= 4.7.0, < 4.8.0. The previous `~> 4.6.3` excluded
   # 4.7.0 outright, so this pin has to be raised by hand for every native fix.
-  s.dependency 'UseSenseSDK', '~> 4.7.0'
+  s.dependency 'UseSenseSDK', '~> 4.7.1'
 
   s.platform         = :ios, '16.0'
   s.swift_version    = '5.9'
