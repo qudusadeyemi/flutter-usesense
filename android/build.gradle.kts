@@ -59,7 +59,7 @@ dependencies {
     // capture path. 4.7.0 reports the real encoded size, caps frames at 960,
     // gzips the metadata, raises the 30s upload write timeout to 300s, and
     // emits real upload progress.
-    implementation("ai.usesense:sdk:4.7.0")
+    implementation("ai.usesense:sdk:4.7.1")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time

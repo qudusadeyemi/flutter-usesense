@@ -4,6 +4,19 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "lib/src/generated/**"
+    # Flutter's tool (3.47+) appends these platform directories to any
+    # analyzer.exclude block on every `flutter pub get`. Committed here so the
+    # tool finds them already present and leaves the file alone: otherwise
+    # every pub get dirtied the working tree, and `pub publish --dry-run`
+    # failed with "1 checked-in file is modified in git" (exit 65), which broke
+    # CI on every PR regardless of its contents.
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
 
 linter:
   rules:
