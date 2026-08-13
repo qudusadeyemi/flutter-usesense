@@ -25,14 +25,6 @@ jobs:
       - name: Install plugin dependencies
         run: flutter pub get
 
-      - name: DEBUG what pub get modified
-        run: |
-          echo "--- git status ---"
-          git status --porcelain
-          echo "--- diff of analysis_options.yaml ---"
-          git diff -- analysis_options.yaml | cat
-          echo "--- end ---"
-
       - name: Verify pub publish shape (dry run)
         # Catches publishing-time issues (missing fields, ignored files,
         # analysis errors in lib/) on every PR so the release workflow
