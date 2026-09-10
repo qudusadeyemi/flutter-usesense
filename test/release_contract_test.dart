@@ -22,7 +22,7 @@ void main() {
     expect(gradle, contains('version = "$packageVersion"'));
   });
 
-  test('published package requires native SDK 4.7.1 on both platforms', () {
+  test('published package requires iOS SDK 4.7.1 and Android SDK 4.8.0', () {
     final podspec = readPackageFile('ios/usesense_flutter.podspec');
     final gradle = readPackageFile('android/build.gradle.kts');
 
@@ -33,8 +33,9 @@ void main() {
     );
     expect(
       gradle,
-      contains('implementation("ai.usesense:sdk:4.7.1")'),
-      reason: 'The Android artifact must be pinned exactly to 4.7.1.',
+      contains('implementation("ai.usesense:sdk:4.8.0")'),
+      reason: 'The Android artifact must be pinned exactly to 4.8.0, the first '
+          'Android SDK that runs face mesh.',
     );
   });
 }
