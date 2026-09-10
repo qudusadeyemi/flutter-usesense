@@ -63,33 +63,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # dart-lang/setup-dart@v1 is the canonical way to wire up pub.dev
-      # OIDC publishing from GitHub Actions. It's maintained by the Dart
-      # team and installs a Dart SDK that knows how to:
-      #
-      #   1. Detect the `ACTIONS_ID_TOKEN_REQUEST_TOKEN` and
-      #      `ACTIONS_ID_TOKEN_REQUEST_URL` env vars that GitHub injects
-      #      when `id-token: write` is granted (we set that above).
-      #   2. Call GitHub's OIDC endpoint to mint a short-lived JWT with
-      #      audience `https://pub.dev`, signed by GitHub's key.
-      #   3. POST that JWT to pub.dev's trusted-publisher endpoint,
-      #      which validates it against the repo + tag-pattern filter
-      #      configured at
-      #      https://pub.dev/packages/usesense_flutter/admin.
-      #   4. Receive a temporary publish token from pub.dev and write
-      #      it to the dart pub credentials file so the subsequent
-      #      `dart pub publish` call finds it.
-      #
-      # Crucially, `subosito/flutter-action@v2`'s bundled Dart does NOT
-      # do any of this on its own — `dart pub publish` from Flutter's
-      # bundled Dart goes straight to interactive device-flow OAuth if
-      # no credentials file exists, which is exactly what broke the
-      # v2.0.1 release attempt. So this step must run BEFORE the
-      # Flutter setup step, so dart-lang/setup-dart's Dart is the one
-      # that sees the OIDC environment and writes the credentials file.
-      - name: Set up Dart (OIDC credential plumbing for pub.dev)
-        uses: dart-lang/setup-dart@v1
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -127,11 +100,36 @@ jobs:
       - name: Unit tests
         run: flutter test
 
+      # dart-lang/setup-dart@v1 is the canonical way to wire up pub.dev
+      # OIDC publishing from GitHub Actions. It mints a short-lived JWT
+      # (audience `https://pub.dev`) from the `ACTIONS_ID_TOKEN_REQUEST_*`
+      # env vars GitHub injects under `id-token: write`, exports it as
+      # PUB_TOKEN, and runs `dart pub token add https://pub.dev
+      # --env-var PUB_TOKEN`. pub.dev validates the JWT against the
+      # repo + tag-pattern filter at
+      # https://pub.dev/packages/usesense_flutter/admin.
+      #
+      # `subosito/flutter-action@v2`'s bundled Dart does NOT do this on
+      # its own — without this step `pub publish` goes straight to
+      # interactive device-flow OAuth, which is what broke v2.0.1.
+      #
+      # This step MUST run AFTER pub get / analyze / test, immediately
+      # before publishing. The token is registered for every request to
+      # https://pub.dev, and pub.dev answers any package-listing request
+      # that carries an Authorization header with a 403. With the token
+      # registered early, Flutter's own flutter_tools bootstrap fails
+      # with "flutter_tools depends on test X which doesn't match any
+      # versions" — that is what broke the v2.5.0 release attempt.
+      - name: Set up Dart (OIDC credential plumbing for pub.dev)
+        uses: dart-lang/setup-dart@v1
+
       - name: Publish to pub.dev
-        # Uses the OIDC token provided by GitHub Actions. Requires the
-        # package to have automated publishing configured on pub.dev
-        # (see the header comment above).
-        run: dart pub publish --force
+        # `flutter pub publish`, not `dart pub publish`: setup-dart puts
+        # its standalone Dart first on PATH, and that SDK cannot publish
+        # a package that depends on the Flutter SDK. Flutter's pub reads
+        # the same token registration. Requires automated publishing on
+        # pub.dev (see the header comment above).
+        run: flutter pub publish --force
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
