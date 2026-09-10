@@ -34,8 +34,7 @@ void main() {
     expect(
       gradle,
       contains('implementation("ai.usesense:sdk:4.8.0")'),
-      reason: 'The Android artifact must be pinned exactly to 4.8.0, the first '
-          'Android SDK that runs face mesh.',
+      reason: 'The Android artifact must be pinned exactly to 4.8.0.',
     );
   });
 }
