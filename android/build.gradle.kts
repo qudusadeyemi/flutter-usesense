@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.usesense.flutter"
-version = "2.4.9"
+version = "2.5.0"
 
 android {
     namespace = "com.usesense.flutter"
@@ -59,7 +59,11 @@ dependencies {
     // capture path. 4.7.0 reports the real encoded size, caps frames at 960,
     // gzips the metadata, raises the 30s upload write timeout to 300s, and
     // emits real upload progress.
-    implementation("ai.usesense:sdk:4.7.1")
+    // 4.8.0 is the floor: below it the Android SDK never ran its face mesh
+    // pipeline, so no session uploaded a verification_package and the server
+    // could not verify mesh integrity (it now excludes mesh for older Android
+    // SDKs and applies the org's mesh policy from 4.8.0).
+    implementation("ai.usesense:sdk:4.8.0")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time
