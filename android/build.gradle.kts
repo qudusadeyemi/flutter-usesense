@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.usesense.flutter"
-version = "2.5.0"
+version = "2.6.0"
 
 android {
     namespace = "com.usesense.flutter"
@@ -63,7 +63,11 @@ dependencies {
     // pipeline, so no session uploaded a verification_package and the server
     // could not verify mesh integrity (it now excludes mesh for older Android
     // SDKs and applies the org's mesh policy from 4.8.0).
-    implementation("ai.usesense:sdk:4.8.0")
+    // 4.9.0 is the floor: it adds server step-up round 2 (a second challenge
+    // in the same session when a Step-up rule matches) and the camera-free
+    // Device Trust step. Below it a step-up falls back to manual review and a
+    // Device Trust step is settled from the network alone.
+    implementation("ai.usesense:sdk:4.9.0")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time
