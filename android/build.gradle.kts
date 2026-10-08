@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.usesense.flutter"
-version = "2.6.0"
+version = "2.6.1"
 
 android {
     namespace = "com.usesense.flutter"
@@ -67,7 +67,9 @@ dependencies {
     // in the same session when a Step-up rule matches) and the camera-free
     // Device Trust step. Below it a step-up falls back to manual review and a
     // Device Trust step is settled from the network alone.
-    implementation("ai.usesense:sdk:4.9.0")
+    // 4.9.1: capture screens take the org brand colour; a nonce-less
+    // Device Trust step is re-read once, then fails cleanly.
+    implementation("ai.usesense:sdk:4.9.1")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time

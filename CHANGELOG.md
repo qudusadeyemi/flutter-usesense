@@ -4,6 +4,13 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.6.1] - 2026-10-08
+
+### Fixed
+- Bumped the native SDK pins: `ai.usesense:sdk` `4.9.0` → **`4.9.1`** and `UseSenseSDK` `~> 4.8.0` → **`~> 4.8.1`**. No Dart API change.
+  - **Face-capture screens take your brand colour.** Inside a branded Flow the challenge instructions, spinners, progress bar and head-turn guide used UseSense blue; they now follow the org's colour.
+  - **A Device Trust step without a nonce is re-read once, then fails cleanly** instead of spinning.
+
 ## [2.6.0] - 2026-10-08
 
 ### Changed
