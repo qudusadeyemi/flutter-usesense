@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'usesense_flutter'
-  s.version          = '2.6.1'
+  s.version          = '2.6.2'
   s.summary          = 'Flutter plugin for UseSense human presence verification.'
   s.description      = <<-DESC
   Flutter plugin wrapping the UseSense iOS SDK for human presence verification
@@ -46,8 +46,8 @@ Pod::Spec.new do |s|
   # 4.8.0 is the floor: it adds server step-up round 2 and the camera-free
   # Device Trust step. `~> 4.8.0` means >= 4.8.0, < 4.9.0.
   # 4.8.1: face-capture screens take the org brand colour; a nonce-less
-  # Device Trust step no longer spins. `~> 4.8.1` means >= 4.8.1, < 4.9.0.
-  s.dependency 'UseSenseSDK', '~> 4.8.1'
+  # Device Trust step no longer spins. `~> 4.8.2` means >= 4.8.2, < 4.9.0.
+  s.dependency 'UseSenseSDK', '~> 4.8.2'
 
   s.platform         = :ios, '16.0'
   s.swift_version    = '5.9'
