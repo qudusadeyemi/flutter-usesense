@@ -4,6 +4,32 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.7.0] - 2026-11-07
+
+### Fixed
+- **Android: passing a `BrandingConfig` crashed** with `ClassCastException`
+  (Integer cannot be cast to Long). The generated bridge read integer fields as
+  `Long`, but Flutter delivers small ints as `Int`. Integer fields are now read
+  as numbers.
+
+### Changed
+- `BrandingConfig.buttonRadius` is now `int?` and defaults to null: unset
+  inherits the dashboard radius instead of forcing 12.
+- Bumped the native SDK pins: `ai.usesense:sdk` `4.9.2` → **`4.11.0`** and
+  `UseSenseSDK` `~> 4.8.2` → **`~> 4.9.0`**.
+  - **Branding: code wins, field by field.** Values set in code beat the
+    dashboard (Flow, then org), which beats the defaults; only explicitly set
+    values count. Session mode now gets the dashboard branding too.
+  - **Capture and result screens match across iOS and Android**: face guide,
+    "Verifying your presence" / "Almost done", the result card under the org's
+    logo, "Powered by Sense". Inside a Flow the result offers only Done.
+  - **Android: the decision reaches your callback when the person taps the
+    result button** (or leaves the screen), as on iOS.
+  - **Android release builds (R8) no longer crash at the face step**, and the
+    capture quality guidance works again.
+  - **iOS: "Verifying your presence" can no longer spin forever**; a dead
+    upload fails in 60 s.
+
 ## [2.6.2] - 2026-10-09
 
 ### Changed

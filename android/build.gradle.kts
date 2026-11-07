@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.usesense.flutter"
-version = "2.6.2"
+version = "2.7.0"
 
 android {
     namespace = "com.usesense.flutter"
@@ -69,7 +69,9 @@ dependencies {
     // Device Trust step is settled from the network alone.
     // 4.9.1: capture screens take the org brand colour; a nonce-less
     // Device Trust step is re-read once, then fails cleanly.
-    implementation("ai.usesense:sdk:4.9.2")
+    // 4.11.0: capture and result screens match iOS; code-wins branding
+    // precedence; release builds (R8) no longer crash at the face step.
+    implementation("ai.usesense:sdk:4.11.0")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time

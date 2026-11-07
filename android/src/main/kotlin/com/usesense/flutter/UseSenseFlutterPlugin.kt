@@ -169,7 +169,7 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
                     logoUrl = b.logoUrl,
                     primaryColor = b.primaryColor,
                     redirectUrl = b.redirectUrl,
-                    buttonRadius = b.buttonRadius?.toInt() ?: 12,
+                    buttonRadius = b.buttonRadius?.toInt(),
                     fontFamily = b.fontFamily,
                 )
             }
