@@ -33,7 +33,7 @@ class BrandingConfig {
     this.logoUrl,
     this.primaryColor,
     this.redirectUrl,
-    this.buttonRadius = 12,
+    this.buttonRadius,
     this.fontFamily,
   });
 
@@ -51,8 +51,9 @@ class BrandingConfig {
   /// organization settings.
   final String? redirectUrl;
 
-  /// Corner radius for buttons in dp. Defaults to 12.
-  final int buttonRadius;
+  /// Corner radius for buttons in dp. Null inherits the dashboard (Flow, then
+  /// org) radius, else the native default.
+  final int? buttonRadius;
 
   /// Custom font family name. Null uses the system default.
   final String? fontFamily;
