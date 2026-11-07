@@ -57,7 +57,7 @@ jobs:
     # ios/Classes/UseSenseFlowsBridge.swift) against the real UseSenseSDK pod.
     # `flutter analyze` only checks Dart, so without this an iOS Swift bug
     # (e.g. a signature mismatch with UseSenseFlows.run) ships undetected.
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
