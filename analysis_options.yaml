@@ -4,6 +4,11 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "lib/src/generated/**"
+    # The example app is analyzed on its own in CI (ci.yml "Analyze example").
+    # Leaving it in the root analysis put it under release.yml's
+    # --fatal-infos, so a Flutter stable deprecation in the example
+    # (material.dart, 3.50.0) blocked the v2.9.0 publish.
+    - example/**
     # Flutter's tool (3.47+) appends these platform directories to any
     # analyzer.exclude block on every `flutter pub get`. Committed here so the
     # tool finds them already present and leaves the file alone: otherwise
