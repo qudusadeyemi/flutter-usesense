@@ -3,11 +3,16 @@ description: Demonstrates the UseSense Flutter plugin.
 publish_to: none
 
 environment:
-  sdk: ">=3.2.0 <4.0.0"
+  # material_ui needs Dart 3.13 / Flutter 3.47+.
+  sdk: ">=3.13.0 <4.0.0"
+  flutter: ">=3.47.0"
 
 dependencies:
   flutter:
     sdk: flutter
+  # Flutter 3.47+ deprecates package:flutter/material.dart in favour of this
+  # package.
+  material_ui: ^1.11.0
   usesense_flutter:
     path: ../
   # Persists the user-entered API key across launches, matching the
