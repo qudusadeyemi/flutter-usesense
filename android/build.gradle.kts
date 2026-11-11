@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.usesense.flutter"
-version = "2.7.0"
+version = "2.8.0"
 
 android {
     namespace = "com.usesense.flutter"
@@ -71,7 +71,12 @@ dependencies {
     // Device Trust step is re-read once, then fails cleanly.
     // 4.11.0: capture and result screens match iOS; code-wins branding
     // precedence; release builds (R8) no longer crash at the face step.
-    implementation("ai.usesense:sdk:4.11.0")
+    // 4.13.1 is the floor: the guided capture redesign, the extra check, the
+    // EVIDENCE-v1 upload, the covered-face model (about +15 MB) and BRAND-v1
+    // (every capture screen follows BrandingConfig.appearance / copy). Below
+    // it the appearance / copy this plugin forwards in session mode are
+    // dropped.
+    implementation("ai.usesense:sdk:4.13.1")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time

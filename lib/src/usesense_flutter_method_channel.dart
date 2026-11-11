@@ -235,6 +235,8 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
               redirectUrl: config.branding!.redirectUrl,
               buttonRadius: config.branding!.buttonRadius,
               fontFamily: config.branding!.fontFamily,
+              appearance: _nonEmpty(config.branding!.appearance?.toMap()),
+              copy: _nonEmpty(config.branding!.copy?.toMap()),
             )
           : null,
       googleCloudProjectNumber: config.googleCloudProjectNumber,
@@ -242,6 +244,10 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
       liveSenseV4Enabled: config.liveSenseV4Enabled,
     );
   }
+
+  /// An empty override is sent as null so it never occupies the code layer.
+  static Map<String?, Object?>? _nonEmpty(Map<String, dynamic>? map) =>
+      (map == null || map.isEmpty) ? null : Map<String?, Object?>.from(map);
 
   PigeonVerificationRequest _toPigeonRequest(VerificationRequest request) {
     return PigeonVerificationRequest(

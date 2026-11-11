@@ -6,6 +6,11 @@
 // 32 bits as Int on Android, so any BrandingConfig (buttonRadius) or error code
 // crashed with ClassCastException. Re-apply after regenerating until pigeon is
 // upgraded.
+//
+// HAND-EDITED (2.8.0): PigeonBrandingConfig.appearance / copy (indices 6, 7)
+// added in the generator's own pattern. Pigeon 22.7.x now rejects message
+// classes named "Pigeon*", so this schema can't be regenerated without renaming
+// every class; keep pigeons/usesense_api.dart and the three .g files in step.
 
 package com.usesense.flutter
 
@@ -101,9 +106,13 @@ data class PigeonBrandingConfig(
   val redirectUrl: String? = null,
   val buttonRadius: Long? = null,
   val fontFamily: String? = null,
+  /** BRAND-v1 FlowAppearance as its camelCase JSON-compatible wire map. */
+  val appearance: Map<String?, Any?>? = null,
+  /** BRAND-v1 FlowCopy as its camelCase JSON-compatible wire map. */
+  val copy: Map<String?, Any?>? = null,
 ) {
   fun toList(): List<Any?> {
-    return listOf(displayName, logoUrl, primaryColor, redirectUrl, buttonRadius, fontFamily)
+    return listOf(displayName, logoUrl, primaryColor, redirectUrl, buttonRadius, fontFamily, appearance, copy)
   }
 
   companion object {
@@ -115,6 +124,8 @@ data class PigeonBrandingConfig(
         redirectUrl = pigeonVar_list[3] as String?,
         buttonRadius = (pigeonVar_list[4] as Number?)?.toLong(),
         fontFamily = pigeonVar_list[5] as String?,
+        appearance = pigeonVar_list[6] as Map<String?, Any?>?,
+        copy = pigeonVar_list[7] as Map<String?, Any?>?,
       )
     }
   }

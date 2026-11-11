@@ -1,12 +1,14 @@
-/// White-label customization contract for the Flows runner.
+/// White-label customization contract for capture screens and the Flows runner.
 ///
 /// [FlowAppearance] (visual theming) and [FlowCopy] (subject-facing strings)
-/// mirror the shared cross-SDK contract. Both are optional and supplied at SDK
-/// init via [UseSenseFlows.runFlow]; the native runner merges them
-/// SDK-init > server(branding) > built-in default.
+/// mirror the shared cross-SDK contract (BRAND-v1). Both are optional. Supply
+/// them in session mode through [BrandingConfig.appearance] /
+/// [BrandingConfig.copy], or per Flow run through [UseSenseFlows.runFlow].
+/// Per field, code beats the dashboard (Flow, then org), which beats the
+/// built-in defaults.
 ///
 /// Every field is optional. Each class exposes [toMap], which emits the
-/// camelCase wire shape the native iOS/Android runners decode (iOS via
+/// camelCase wire shape the native iOS/Android SDKs decode (iOS via
 /// `JSONDecoder`, Android via `FlowAppearance.decode` / `FlowCopy.decode`).
 /// Null fields are omitted so an unset override never blanks the native default.
 library;
@@ -226,7 +228,34 @@ class AppearanceLoader {
       });
 }
 
-/// Visual white-label theming for the Flows runner. Mirrors the cross-SDK
+/// Camera-surface accents (BRAND-v1 section 4.2). The camera surface is
+/// always dark; each accent is contrast-gated by the native SDK (3:1 against
+/// `#333333`) and falls back as documented on each field.
+class AppearanceCapture {
+  /// Creates an [AppearanceCapture] override.
+  const AppearanceCapture({this.ring, this.challenge, this.warning});
+
+  /// Align oval "ready" stroke, scan ring, contour lines and upload bar.
+  /// Falls back to `colors.primary` (lightened until it reads on the camera).
+  final String? ring;
+
+  /// Extra-check ring while it runs, and the extra-check sheet icon. Falls back
+  /// to Sense purple `#A878FC`.
+  final String? challenge;
+
+  /// Failing oval, paused ring, Follow Dot dot and trail. Falls back to
+  /// `colors.warning`.
+  final String? warning;
+
+  /// camelCase wire map; null fields omitted.
+  Map<String, dynamic> toMap() => _pruned(<String, dynamic>{
+        'ring': ring,
+        'challenge': challenge,
+        'warning': warning,
+      });
+}
+
+/// Visual white-label theming for capture screens and the Flows runner. Mirrors the cross-SDK
 /// `FlowAppearance` contract. All fields optional; omitted fields fall back to
 /// the operator's server branding then the built-in tokens.
 class FlowAppearance {
@@ -240,6 +269,7 @@ class FlowAppearance {
     this.icons,
     this.loader,
     this.mode,
+    this.capture,
   });
 
   /// Palette overrides.
@@ -264,7 +294,11 @@ class FlowAppearance {
   final AppearanceLoader? loader;
 
   /// Force a palette or follow the OS: `'light'`, `'dark'`, or `'auto'`.
+  /// Unset: capture page surfaces stay dark.
   final String? mode;
+
+  /// Camera-surface accents (ring, challenge, warning).
+  final AppearanceCapture? capture;
 
   /// camelCase wire map the native runner decodes; null fields omitted.
   Map<String, dynamic> toMap() => _pruned(<String, dynamic>{
@@ -276,6 +310,7 @@ class FlowAppearance {
         'icons': icons?.toMap(),
         'loader': loader?.toMap(),
         'mode': mode,
+        'capture': capture?.toMap(),
       });
 }
 
@@ -590,7 +625,7 @@ class PrivacyCopy {
       });
 }
 
-/// Subject-facing string overrides for the Flows runner. Mirrors the cross-SDK
+/// Subject-facing string overrides for capture screens and the Flows runner. Mirrors the cross-SDK
 /// `FlowCopy` contract. All fields optional; omitted keys keep the built-in
 /// (or server-configured) copy.
 class FlowCopy {
@@ -607,6 +642,7 @@ class FlowCopy {
     this.errors,
     this.privacy,
     this.help,
+    this.capture,
   });
 
   /// Welcome / intro copy.
@@ -642,6 +678,24 @@ class FlowCopy {
   /// Free-form help text / tooltips keyed by an SDK-defined slot id.
   final Map<String, String>? help;
 
+  /// Capture-screen strings (BRAND-v1 section 5, `copy.capture`), as nested
+  /// groups of camelCase keys, for example:
+  ///
+  /// ```dart
+  /// FlowCopy(capture: {
+  ///   'primer': {'selfieTitle': 'Take a quick selfie', 'selfieTips': [...]},
+  ///   'guidance': {'closer': 'Move a little closer'},
+  ///   'extraCheck': {'headTurnNext': 'Now to the {side}'},
+  /// })
+  /// ```
+  ///
+  /// Groups: `primer`, `guidance`, `extraCheck`, `upload`, `result`, `errors`,
+  /// `leave`. Values are strings, or lists of strings for `*Tips` keys.
+  /// Placeholders `{app}` and `{side}` are filled by the native SDK. A missing
+  /// or blank key keeps the shipped English string. The value must be
+  /// JSON-compatible (strings, lists and maps).
+  final Map<String, dynamic>? capture;
+
   /// camelCase wire map the native runner decodes; null fields omitted.
   Map<String, dynamic> toMap() => _pruned(<String, dynamic>{
         'welcome': welcome?.toMap(),
@@ -655,6 +709,7 @@ class FlowCopy {
         'errors': errors?.toMap(),
         'privacy': privacy?.toMap(),
         'help': help,
+        'capture': capture,
       });
 }
 

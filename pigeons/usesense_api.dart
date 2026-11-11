@@ -61,6 +61,8 @@ class PigeonBrandingConfig {
     this.redirectUrl,
     this.buttonRadius,
     this.fontFamily,
+    this.appearance,
+    this.copy,
   });
 
   String? displayName;
@@ -69,6 +71,12 @@ class PigeonBrandingConfig {
   String? redirectUrl;
   int? buttonRadius;
   String? fontFamily;
+
+  /// BRAND-v1 FlowAppearance as its camelCase JSON-compatible wire map.
+  Map<String?, Object?>? appearance;
+
+  /// BRAND-v1 FlowCopy as its camelCase JSON-compatible wire map.
+  Map<String?, Object?>? copy;
 }
 
 /// SDK configuration passed to [UseSenseHostApi.initialize].

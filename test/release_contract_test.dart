@@ -22,19 +22,19 @@ void main() {
     expect(gradle, contains('version = "$packageVersion"'));
   });
 
-  test('published package requires iOS SDK 4.9.0 and Android SDK 4.11.0', () {
+  test('published package requires iOS SDK 4.11.0 and Android SDK 4.13.1', () {
     final podspec = readPackageFile('ios/usesense_flutter.podspec');
     final gradle = readPackageFile('android/build.gradle.kts');
 
     expect(
       podspec,
-      contains("s.dependency 'UseSenseSDK', '~> 4.9.0'"),
-      reason: 'The CocoaPods constraint must require 4.9.0 but not 4.10.x.',
+      contains("s.dependency 'UseSenseSDK', '~> 4.11.0'"),
+      reason: 'The CocoaPods constraint must require 4.11.0 but not 4.12.x.',
     );
     expect(
       gradle,
-      contains('implementation("ai.usesense:sdk:4.11.0")'),
-      reason: 'The Android artifact must be pinned exactly to 4.11.0.',
+      contains('implementation("ai.usesense:sdk:4.13.1")'),
+      reason: 'The Android artifact must be pinned exactly to 4.13.1.',
     );
   });
 }

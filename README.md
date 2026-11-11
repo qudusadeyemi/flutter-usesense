@@ -31,7 +31,7 @@ Add `usesense_flutter` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  usesense_flutter: ^2.4.4
+  usesense_flutter: ^2.8.0
 ```
 
 Then run:
@@ -154,18 +154,49 @@ useSense.dispose();
 
 ## White-labeling (Appearance & Copy)
 
-The verification flow UI is fully customizable through two optional inputs you pass
-on a flow run: `appearance` (`FlowAppearance`) and `copy` (`FlowCopy`). Values are
-merged **SDK-init > dashboard (org settings) > built-in default**. Every field is
-optional; anything you omit keeps the Sense default.
+Every capture screen, and the Flows runner, is customizable through two optional
+inputs: `appearance` (`FlowAppearance`) and `copy` (`FlowCopy`). Pass them in session
+mode on `BrandingConfig`, or per Flow run on `UseSenseFlows.runFlow`. Per field, code
+beats the dashboard (Flow, then org), which beats the built-in default. Every field is
+optional; anything you omit keeps the dashboard value, then the Sense default.
 
-You can set this two ways: in code (below), or no-code via the dashboard's
-**Flows → Appearance** tab (saved on your org, delivered to every SDK and the hosted
-pages, no redeploy).
+You can also set this no-code in the dashboard (saved on your org or Flow, delivered to
+every SDK and the hosted pages, no redeploy).
 
-Customizable surfaces: colors (plus dark-mode overrides), typography, shape and
-button style, logo, background, icons/illustrations, the loader, and every
-subject-facing string plus privacy copy.
+Customizable surfaces: colors (plus dark-mode overrides) and `mode`, typography, shape
+and button style, logo, background, icons/illustrations, the loader, the camera accents
+(`AppearanceCapture`: `ring`, `challenge`, `warning`; the camera itself stays dark), and
+every subject-facing string, including the capture screens (`FlowCopy.capture`).
+
+Session mode:
+
+```dart
+await useSense.initialize(
+  UseSenseConfig(
+    apiKey: 'pk_live_your_api_key',
+    branding: BrandingConfig(
+      appearance: FlowAppearance(
+        mode: 'light',
+        colors: AppearanceColors(primary: '#1F7A4D'),
+        shape: AppearanceShape(buttonRadius: 10),
+        capture: AppearanceCapture(ring: '#1F7A4D'),
+      ),
+      copy: FlowCopy(
+        capture: {
+          'primer': {'selfieTitle': 'A quick selfie for {app}'},
+          'extraCheck': {'headTurnNext': 'Now to the {side}'},
+        },
+      ),
+    ),
+  ),
+);
+```
+
+`FlowCopy.capture` takes nested groups of camelCase keys (`primer`, `guidance`,
+`extraCheck`, `upload`, `result`, `errors`, `leave`). A missing or blank key keeps the
+shipped English.
+
+Flows:
 
 ```dart
 await UseSenseFlows.runFlow(
@@ -223,8 +254,10 @@ await useSense.initialize(
 | `logoUrl` | `String?` | `null` | URL to your logo image. |
 | `primaryColor` | `String?` | `null` | Hex color string, e.g. `"#4F46E5"`. |
 | `redirectUrl` | `String?` | `null` | URL to redirect after verification. |
-| `buttonRadius` | `int` | `12` | Corner radius for UI buttons. |
+| `buttonRadius` | `int?` | `null` | Corner radius for UI buttons. Null inherits the dashboard. |
 | `fontFamily` | `String?` | `null` | Custom font family name. |
+| `appearance` | `FlowAppearance?` | `null` | Full capture-screen theme (see White-labeling). Beats the fields above. |
+| `copy` | `FlowCopy?` | `null` | Subject-facing strings, including `capture`. |
 
 ### UseSenseEnvironment
 

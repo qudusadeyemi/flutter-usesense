@@ -20,6 +20,9 @@ import com.usesense.sdk.EventType
 import com.usesense.sdk.SessionType
 import com.usesense.sdk.UseSenseEnvironment
 import com.usesense.sdk.VerificationRequest
+import com.usesense.sdk.flows.FlowAppearance
+import com.usesense.sdk.flows.FlowCopy
+import org.json.JSONObject
 
 /**
  * Flutter plugin that bridges Dart calls to the UseSense Android SDK.
@@ -171,6 +174,13 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
                     redirectUrl = b.redirectUrl,
                     buttonRadius = b.buttonRadius?.toInt(),
                     fontFamily = b.fontFamily,
+                    // BRAND-v1: the full appearance / copy reach every capture
+                    // screen in session mode too. A malformed map is dropped
+                    // (inherit) rather than failing initialize.
+                    appearance = b.appearance?.let { jsonObjectOf(it) }
+                        ?.let { runCatching { FlowAppearance.decode(it) }.getOrNull() },
+                    copy = b.copy?.let { jsonObjectOf(it) }
+                        ?.let { runCatching { FlowCopy.decode(it) }.getOrNull() },
                 )
             }
             val environment = when (config.environment) {
@@ -417,4 +427,14 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
         }
         return FlutterError(code, error.message, error.details)
     }
+
+    /**
+     * The pigeon map (camelCase JSON-compatible values, nested maps and lists)
+     * as the JSONObject the native decoders read. Null keys are dropped; an
+     * unconvertible map yields null, so the field inherits.
+     */
+    private fun jsonObjectOf(map: Map<String?, Any?>): JSONObject? = runCatching {
+        @Suppress("UNCHECKED_CAST")
+        JSONObject(map.filterKeys { it != null } as Map<String, Any?>)
+    }.getOrNull()
 }

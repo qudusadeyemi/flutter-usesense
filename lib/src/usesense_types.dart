@@ -4,6 +4,8 @@
 /// Pigeon-generated message classes.
 library;
 
+import 'flow_appearance.dart';
+
 /// The target environment for the UseSense backend.
 enum UseSenseEnvironment {
   /// Sandbox environment for testing.
@@ -25,7 +27,11 @@ enum SessionType {
   authentication,
 }
 
-/// Branding configuration for the SDK's camera UI.
+/// Branding configuration for the SDK's capture screens.
+///
+/// Per field, values set here beat the dashboard (Flow, then org), which beats
+/// the built-in defaults; unset fields inherit. [appearance] beats the legacy
+/// scalar fields ([primaryColor], [buttonRadius], [fontFamily], [logoUrl]).
 class BrandingConfig {
   /// Creates a [BrandingConfig].
   const BrandingConfig({
@@ -35,6 +41,8 @@ class BrandingConfig {
     this.redirectUrl,
     this.buttonRadius,
     this.fontFamily,
+    this.appearance,
+    this.copy,
   });
 
   /// Display name shown in the UI. Null inherits from organization settings.
@@ -57,6 +65,16 @@ class BrandingConfig {
 
   /// Custom font family name. Null uses the system default.
   final String? fontFamily;
+
+  /// Full white-label appearance for every capture screen (BRAND-v1): palette
+  /// and `mode`, typography, shape, logo, background, icons, loader and the
+  /// camera accents ([AppearanceCapture]). Null inherits the dashboard.
+  final FlowAppearance? appearance;
+
+  /// Subject-facing string overrides, including the capture screens'
+  /// [FlowCopy.capture] strings. Null keeps the dashboard copy, then the
+  /// shipped English.
+  final FlowCopy? copy;
 }
 
 /// Configuration for the UseSense SDK.
