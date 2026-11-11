@@ -31,7 +31,7 @@ Add `usesense_flutter` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  usesense_flutter: ^2.8.0
+  usesense_flutter: ^2.9.0
 ```
 
 Then run:

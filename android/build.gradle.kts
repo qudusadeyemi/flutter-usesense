@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.usesense.flutter"
-version = "2.8.0"
+version = "2.9.0"
 
 android {
     namespace = "com.usesense.flutter"
@@ -76,7 +76,10 @@ dependencies {
     // (every capture screen follows BrandingConfig.appearance / copy). Below
     // it the appearance / copy this plugin forwards in session mode are
     // dropped.
-    implementation("ai.usesense:sdk:4.13.1")
+    // 4.14.0 is the floor: step_events v2 (the first move of each challenge
+    // step, for server replay detection), a closed-loop extra check that also
+    // judges pitch, and branding fixes.
+    implementation("ai.usesense:sdk:4.14.0")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time

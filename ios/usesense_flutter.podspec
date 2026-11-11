@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'usesense_flutter'
-  s.version          = '2.8.0'
+  s.version          = '2.9.0'
   s.summary          = 'Flutter plugin for UseSense human presence verification.'
   s.description      = <<-DESC
   Flutter plugin wrapping the UseSense iOS SDK for human presence verification
@@ -52,8 +52,10 @@ Pod::Spec.new do |s|
   # EVIDENCE-v1 upload, the covered-face model (about +16 MB) and BRAND-v1
   # (every capture screen follows BrandingConfig.appearance / copy). Below it
   # the appearance / copy this plugin forwards in session mode are dropped.
-  # `~> 4.11.0` means >= 4.11.0, < 4.12.0.
-  s.dependency 'UseSenseSDK', '~> 4.11.0'
+  # 4.12.0 is the floor: step_events v2 (the first move of each challenge
+  # step, for server replay detection) and branding fixes.
+  # `~> 4.12.0` means >= 4.12.0, < 4.13.0.
+  s.dependency 'UseSenseSDK', '~> 4.12.0'
 
   s.platform         = :ios, '16.0'
   s.swift_version    = '5.9'
