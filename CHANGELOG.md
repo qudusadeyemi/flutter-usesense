@@ -4,6 +4,17 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.9.0] - 2026-11-11
+
+### Changed
+- Bumped the native SDK pins: `ai.usesense:sdk` `4.13.1` → **`4.14.0`** and
+  `UseSenseSDK` `~> 4.11.0` → **`~> 4.12.0`**. They bring:
+  - **step_events v2**: the capture records the first move of each challenge
+    step, so the server can detect a replayed capture.
+  - **Android: the extra check runs closed-loop and also judges pitch** (head
+    up and down), not only yaw.
+  - **Branding fixes** carried from the native SDKs.
+
 ## [2.8.0] - 2026-11-11
 
 New capture screens, and every one of them follows your brand.
