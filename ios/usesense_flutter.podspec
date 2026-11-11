@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'usesense_flutter'
-  s.version          = '2.7.0'
+  s.version          = '2.8.0'
   s.summary          = 'Flutter plugin for UseSense human presence verification.'
   s.description      = <<-DESC
   Flutter plugin wrapping the UseSense iOS SDK for human presence verification
@@ -47,7 +47,13 @@ Pod::Spec.new do |s|
   # Device Trust step. `~> 4.8.0` means >= 4.8.0, < 4.9.0.
   # 4.8.1: face-capture screens take the org brand colour; a nonce-less
   # Device Trust step no longer spins. `~> 4.8.2` means >= 4.8.2, < 4.9.0.
-  s.dependency 'UseSenseSDK', '~> 4.9.0'
+  # 4.9.0: capture and result screens match Android; code-wins branding.
+  # 4.11.0 is the floor: the guided capture redesign, the extra check, the
+  # EVIDENCE-v1 upload, the covered-face model (about +16 MB) and BRAND-v1
+  # (every capture screen follows BrandingConfig.appearance / copy). Below it
+  # the appearance / copy this plugin forwards in session mode are dropped.
+  # `~> 4.11.0` means >= 4.11.0, < 4.12.0.
+  s.dependency 'UseSenseSDK', '~> 4.11.0'
 
   s.platform         = :ios, '16.0'
   s.swift_version    = '5.9'

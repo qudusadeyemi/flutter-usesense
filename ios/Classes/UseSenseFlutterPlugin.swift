@@ -111,11 +111,17 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
 
         var brandingConfig: BrandingConfig? = nil
         if let b = config.branding {
+            // Unset stays unset (nil), so a dashboard colour or radius is not
+            // beaten by a filled-in default. BRAND-v1: the full appearance /
+            // copy reach every capture screen in session mode too; a malformed
+            // map decodes to nil (inherit) rather than failing initialize.
             brandingConfig = BrandingConfig(
                 logoUrl: b.logoUrl,
-                primaryColor: b.primaryColor ?? "#4F7CFF",
-                buttonRadius: CGFloat(b.buttonRadius ?? 10),
-                fontFamily: b.fontFamily
+                primaryColor: b.primaryColor,
+                buttonRadius: b.buttonRadius.map { CGFloat($0) },
+                fontFamily: b.fontFamily,
+                appearance: Self.jsonObject(b.appearance).flatMap(FlowAppearance.decodeFromJSONObject),
+                copy: Self.jsonObject(b.copy).flatMap(FlowCopy.decodeFromJSONObject)
             )
         }
 
@@ -407,5 +413,17 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
         @unknown default: code = "sdk_error"
         }
         return PigeonError(code: code, message: error.message, details: error.details)
+    }
+
+    /// The pigeon map (camelCase JSON-compatible values) as the JSON object the
+    /// native decoders read. Nil keys and nil values are dropped.
+    private static func jsonObject(_ map: [String?: Any?]?) -> [String: Any]? {
+        guard let map = map else { return nil }
+        var out: [String: Any] = [:]
+        for (key, value) in map {
+            guard let key = key, let value = value, !(value is NSNull) else { continue }
+            out[key] = value
+        }
+        return out.isEmpty ? nil : out
     }
 }

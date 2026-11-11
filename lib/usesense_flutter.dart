@@ -44,10 +44,12 @@ export 'src/flows.dart'
         FlowRunState,
         UseSenseFlows;
 
-// White-label customization for the Flows runner (appearance + copy).
+// White-label customization (appearance + copy) for capture screens, in
+// session mode (BrandingConfig) and in Flows (UseSenseFlows.runFlow).
 export 'src/flow_appearance.dart'
     show
         AppearanceBackground,
+        AppearanceCapture,
         AppearanceColors,
         AppearanceIcons,
         AppearanceLoader,

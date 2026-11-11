@@ -4,6 +4,56 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.8.0] - 2026-11-11
+
+New capture screens, and every one of them follows your brand.
+
+### Added
+- **Brand support in session mode.** `BrandingConfig` takes `appearance`
+  (`FlowAppearance`) and `copy` (`FlowCopy`), the same contract Flows already
+  used, and passes them to the native `BrandingConfig.appearance` / `copy` on
+  iOS and Android. Every capture screen reads them: primers, the extra-check
+  sheet, the upload sheet, result and error pages, the leave dialog and the
+  loading screens.
+  - Page surface: the full palette (`colors.*`, `colors.dark.*`), `mode`
+    (`light` / `dark` / `auto`; unset keeps the dark capture pages),
+    `typography.fontFamily` / `displayFamily`, `shape.radius` / `buttonRadius` /
+    `buttonStyle`, `logo`, `background`, `icons` and `loader`.
+  - Camera surface: new `AppearanceCapture` (`appearance.capture`) with `ring`,
+    `challenge` and `warning` accents. The camera stays dark; each accent is
+    contrast-checked by the native SDK and falls back to a readable colour.
+  - Capture strings: new `FlowCopy.capture`, nested groups of camelCase keys
+    (`primer`, `guidance`, `extraCheck`, `upload`, `result`, `errors`, `leave`)
+    with `{app}` and `{side}` placeholders. A missing or blank key keeps the
+    shipped English.
+  - Per field, code beats the dashboard (Flow, then org), which beats the
+    defaults. `appearance` beats the legacy `primaryColor` / `buttonRadius` /
+    `fontFamily` / `logoUrl`, which keep working.
+- `UseSenseFlows.runFlow` accepts the same `appearance.capture` and
+  `copy.capture`.
+
+### Changed
+- Bumped the native SDK pins: `ai.usesense:sdk` `4.11.0` → **`4.13.1`** and
+  `UseSenseSDK` `~> 4.9.0` → **`~> 4.11.0`**. They bring:
+  - **New guided capture screens** ("Take a quick selfie", the align oval and
+    scan ring, a clearer upload sheet and result pages), the same on iOS and
+    Android.
+  - **The extra check**: when the server asks for more, a short Head Turn,
+    Follow Dot or Speak Digits step runs in the same capture, under the same
+    quality checks as the scan.
+  - **EVIDENCE-v1 upload**: the capture evidence (frame timing, colour replay,
+    near frames) is uploaded in the format the server now verifies.
+  - **A covered-face model** on device: a face behind a hand or object is
+    asked to uncover before the scan and during the extra check.
+  - A fill light and "Find more light" guidance in a dark room.
+- **App size: about +15 MB on Android and about +16 MB on iOS**, mostly the
+  covered-face model.
+
+### Fixed
+- **iOS: an unset `primaryColor` or `buttonRadius` no longer beats the
+  dashboard.** The plugin filled them with `#4F7CFF` and `10`, which the native
+  SDK counted as set in code. Unset now stays unset, as on Android.
+
 ## [2.7.0] - 2026-11-07
 
 ### Fixed
