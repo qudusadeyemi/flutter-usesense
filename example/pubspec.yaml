@@ -3,8 +3,10 @@ description: Demonstrates the UseSense Flutter plugin.
 publish_to: none
 
 environment:
-  # material_ui needs Dart 3.13 / Flutter 3.47+.
-  sdk: ">=3.13.0 <4.0.0"
+  # The Dart lower bound sets the formatter's language version, so it stays at
+  # 3.2 (raising it reformats the example). material_ui itself requires Dart
+  # 3.13 / Flutter 3.47+, which the flutter constraint below states.
+  sdk: ">=3.2.0 <4.0.0"
   flutter: ">=3.47.0"
 
 dependencies:
