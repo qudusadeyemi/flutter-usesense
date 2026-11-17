@@ -4,6 +4,21 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.10.0] - 2026-11-17
+
+### Added
+- **`UseSenseDeviceCheck`: the headless silent device check for Your KYC.**
+  Keep your own KYC provider's SDK and run this next to it: no UI, no camera,
+  no permission prompt. Create the check on your server
+  (`POST /v1/device-checks`), then `start()` before the provider opens and
+  `finish()` after it closes. Both resolve to a `DeviceCheckResult` and never
+  throw. Error codes are normalised across iOS and Android
+  (`DeviceCheckErrorCode`).
+
+### Changed
+- Bumped the native SDK pins: `ai.usesense:sdk` `4.14.0` → **`4.15.0`** and
+  `UseSenseSDK` `~> 4.12.0` → **`~> 4.13.0`** (the native device check).
+
 ## [2.9.0] - 2026-11-11
 
 ### Changed

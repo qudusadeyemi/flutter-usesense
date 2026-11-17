@@ -44,6 +44,16 @@ export 'src/flows.dart'
         FlowRunState,
         UseSenseFlows;
 
+// Headless silent device check for Your KYC: runs next to your own KYC
+// provider's SDK with no UI, no camera and no permission prompt.
+export 'src/device_check.dart'
+    show
+        DeviceCheckError,
+        DeviceCheckErrorCode,
+        DeviceCheckPhase,
+        DeviceCheckResult,
+        UseSenseDeviceCheck;
+
 // White-label customization (appearance + copy) for capture screens, in
 // session mode (BrandingConfig) and in Flows (UseSenseFlows.runFlow).
 export 'src/flow_appearance.dart'

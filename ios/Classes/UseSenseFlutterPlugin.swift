@@ -17,6 +17,10 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
     private var flowsChannel: FlutterMethodChannel?
     private var flowsBridge: UseSenseFlowsBridge?
 
+    // Headless silent device check for Your KYC (no UI).
+    private var deviceCheckChannel: FlutterMethodChannel?
+    private var deviceCheckBridge: UseSenseDeviceCheckBridge?
+
     // MARK: - FlutterPlugin
 
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -46,6 +50,17 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
             flowsBridge.handle(call: call, result: result)
         }
         instance.flowsChannel = flowsChannel
+
+        let deviceCheckBridge = UseSenseDeviceCheckBridge()
+        instance.deviceCheckBridge = deviceCheckBridge
+        let deviceCheckChannel = FlutterMethodChannel(
+            name: "com.usesense.flutter/device_check",
+            binaryMessenger: registrar.messenger()
+        )
+        deviceCheckChannel.setMethodCallHandler { call, result in
+            deviceCheckBridge.handle(call: call, result: result)
+        }
+        instance.deviceCheckChannel = deviceCheckChannel
     }
 
     private var v4Channel: FlutterMethodChannel?
