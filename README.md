@@ -31,7 +31,7 @@ Add `usesense_flutter` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  usesense_flutter: ^2.10.0
+  usesense_flutter: ^2.10.1
 ```
 
 Then run:
@@ -257,7 +257,7 @@ iOS and Android: `invalidToken` and `tokenExpired` (create a new check; a token 
 minutes), `nonceMismatch`, `invalidInput`, `outOfOrder` (start once, then finish once),
 `notFound`, `unavailable`, `networkError`, `timeout` (retried once by the SDK already),
 `invalidConfig`, `cancelled`. The app is never told the score; read it on your server with
-`GET /v1/device-checks/:id`. Needs native SDKs iOS 4.13.0 and Android 4.15.0 (pinned by this
+`GET /v1/device-checks/:id`. Needs native SDKs iOS 4.13.1 and Android 4.15.0 (pinned by this
 plugin).
 
 ## Configuration Reference
