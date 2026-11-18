@@ -22,14 +22,14 @@ void main() {
     expect(gradle, contains('version = "$packageVersion"'));
   });
 
-  test('published package requires iOS SDK 4.13.0 and Android SDK 4.15.0', () {
+  test('published package requires iOS SDK 4.13.1 and Android SDK 4.15.0', () {
     final podspec = readPackageFile('ios/usesense_flutter.podspec');
     final gradle = readPackageFile('android/build.gradle.kts');
 
     expect(
       podspec,
-      contains("s.dependency 'UseSenseSDK', '~> 4.13.0'"),
-      reason: 'The CocoaPods constraint must require 4.13.0 but not 4.14.x.',
+      contains("s.dependency 'UseSenseSDK', '~> 4.13.1'"),
+      reason: 'The CocoaPods constraint must require 4.13.1 but not 4.14.x.',
     );
     expect(
       gradle,

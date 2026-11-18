@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'usesense_flutter'
-  s.version          = '2.10.0'
+  s.version          = '2.10.1'
   s.summary          = 'Flutter plugin for UseSense human presence verification.'
   s.description      = <<-DESC
   Flutter plugin wrapping the UseSense iOS SDK for human presence verification
@@ -56,8 +56,10 @@ Pod::Spec.new do |s|
   # step, for server replay detection) and branding fixes.
   # 4.13.0 is the floor: the headless silent device check for Your KYC
   # (UseSense.deviceCheck), bridged as UseSenseDeviceCheck.
-  # `~> 4.13.0` means >= 4.13.0, < 4.14.0.
-  s.dependency 'UseSenseSDK', '~> 4.13.0'
+  # 4.13.1 is the floor: device checks send the device telemetry (cpu_abi,
+  # RAM, storage) the server scores; 4.13.0 scored them 0 on every iOS check.
+  # `~> 4.13.1` means >= 4.13.1, < 4.14.0.
+  s.dependency 'UseSenseSDK', '~> 4.13.1'
 
   s.platform         = :ios, '16.0'
   s.swift_version    = '5.9'

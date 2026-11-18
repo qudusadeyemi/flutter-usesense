@@ -4,6 +4,15 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.10.1] - 2026-11-18
+
+### Changed
+- Raised the iOS SDK floor: `UseSenseSDK` `~> 4.13.0` → **`~> 4.13.1`**. iOS
+  4.13.1 sends the device telemetry (CPU, RAM, storage) with the silent device
+  check and the Flows Device Trust step, so iOS devices no longer lose those
+  Device Trust points. Android is unchanged (`ai.usesense:sdk` 4.15.0 already
+  sends them).
+
 ## [2.10.0] - 2026-11-17
 
 ### Added
