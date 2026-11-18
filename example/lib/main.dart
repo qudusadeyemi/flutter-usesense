@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:usesense_flutter/usesense_flutter.dart';
 
+import 'screens/device_check_screen.dart';
 import 'screens/home_screen.dart';
 
 void main() {
@@ -36,7 +37,11 @@ class UseSenseExampleApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.dark,
       ),
-      home: HomeScreen(useSense: UseSenseFlutter()),
+      // A launch environment carrying a device check (automated device
+      // tests) opens the silent device check screen and runs it.
+      home: DeviceCheckScreen.hasLaunchCheck
+          ? const DeviceCheckScreen(autorun: true)
+          : HomeScreen(useSense: UseSenseFlutter()),
     );
   }
 }
