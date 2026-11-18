@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:usesense_flutter/usesense_flutter.dart';
 
 class EventTile extends StatelessWidget {

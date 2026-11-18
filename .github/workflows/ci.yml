@@ -48,7 +48,7 @@ jobs:
         working-directory: example
 
       - name: Analyze example
-        run: flutter analyze
+        run: flutter analyze --fatal-infos --fatal-warnings
         working-directory: example
 
   build-ios:
