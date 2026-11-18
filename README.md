@@ -31,7 +31,7 @@ Add `usesense_flutter` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  usesense_flutter: ^2.9.0
+  usesense_flutter: ^2.10.0
 ```
 
 Then run:
@@ -215,6 +215,50 @@ await UseSenseFlows.runFlow(
 Full reference: [`docs/WHITE_LABEL.md` in the web SDK](https://github.com/qudusadeyemi/usesense-web-sdk/blob/main/docs/WHITE_LABEL.md).
 
 ---
+
+## Silent device check (Your KYC)
+
+Keep your own KYC provider's SDK and run `UseSenseDeviceCheck` next to it. No UI, no
+camera and no permission prompt: Sense scores the device and links the result to your
+provider's result when it reaches your Your KYC connection.
+
+1. **Your server** creates a check with your API key (never ship the key in the app):
+
+   ```bash
+   curl -X POST https://api.usesense.ai/v1/device-checks \
+     -H "x-api-key: sk_your_key" -H "content-type: application/json" \
+     -d '{ "user_ref": "cust_88211", "platform": "android" }'   # or "ios"
+   # 201 { "deviceCheckId": "dc_...", "token": "dct_...", "nonce": "dn_...", "expiresAt": "..." }
+   ```
+
+2. **The app** runs the check around your provider, passing `deviceCheckId` into the
+   provider's metadata (map it to **Device check id** on the connection), or use the same
+   `user_ref` for both:
+
+   ```dart
+   final check = UseSenseDeviceCheck(
+     deviceCheckId: created.deviceCheckId,
+     token: created.token,
+     nonce: created.nonce,
+   );
+
+   final started = await check.start(); // before your provider's SDK opens
+   if (!started.ok) debugPrint('device check: ${started.error!.code}');
+
+   await provider.start(metadata: {'device_check_id': created.deviceCheckId});
+
+   await check.finish(); // after it closes
+   await check.dispose();
+   ```
+
+`start()` and `finish()` never throw. They resolve to a `DeviceCheckResult` (`ok`, or an
+`error` with a `DeviceCheckErrorCode`, `message` and `retryable`). The codes are the same on
+iOS and Android: `invalidToken` and `tokenExpired` (create a new check; a token lasts 15
+minutes), `nonceMismatch`, `invalidInput`, `outOfOrder` (start once, then finish once),
+`notFound`, `unavailable`, `networkError`, `timeout` (retried once by the SDK already),
+`invalidConfig`, `cancelled`. The app is never told the score; read it on your server with
+`GET /v1/device-checks/:id`. Needs native SDKs iOS 4.13.0 and Android 4.15.0 (pinned by this
+plugin).
 
 ## Configuration Reference
 

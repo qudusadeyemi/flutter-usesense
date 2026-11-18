@@ -39,6 +39,8 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var v4Channel: MethodChannel? = null
     private var flowsChannel: MethodChannel? = null
+    private var deviceCheckChannel: MethodChannel? = null
+    private var deviceCheckBridge: UseSenseDeviceCheckBridge? = null
     private var flowsBridge: UseSenseFlowsBridge? = null
 
     private fun handleV4Call(call: MethodCall, result: MethodChannel.Result) {
@@ -117,6 +119,12 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
         flowsChannel?.setMethodCallHandler { call, result ->
             flowsBridge?.handle(call, result, activity)
         }
+
+        // Headless silent device check for Your KYC (no UI, no activity).
+        val dcBridge = UseSenseDeviceCheckBridge { context }
+        deviceCheckBridge = dcBridge
+        deviceCheckChannel = MethodChannel(binding.binaryMessenger, "com.usesense.flutter/device_check")
+        deviceCheckChannel?.setMethodCallHandler { call, result -> dcBridge.handle(call, result) }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -126,6 +134,10 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
         flowsChannel?.setMethodCallHandler(null)
         flowsChannel = null
         flowsBridge = null
+        deviceCheckChannel?.setMethodCallHandler(null)
+        deviceCheckChannel = null
+        deviceCheckBridge?.disposeAll()
+        deviceCheckBridge = null
         eventUnsubscribe?.invoke()
         eventUnsubscribe = null
         flutterApi = null

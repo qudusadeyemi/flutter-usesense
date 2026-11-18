@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:usesense_flutter/usesense_flutter.dart';
 
 import '../widgets/event_tile.dart';
+import 'device_check_screen.dart';
 import 'result_screen.dart';
 
 // Keys for shared_preferences persistence. Match the semantics of iOS's
@@ -430,6 +431,16 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: canInteract ? _runFlow : null,
               icon: const Icon(Icons.account_tree),
               label: const Text('Run a Flow'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const DeviceCheckScreen(),
+                ),
+              ),
+              icon: const Icon(Icons.phonelink_lock),
+              label: const Text('Silent device check (Your KYC)'),
             ),
             const SizedBox(height: 16),
 
