@@ -3,6 +3,8 @@
 // HAND-EDITED (2.8.0): PigeonBrandingConfig.appearance / copy (indices 6, 7)
 // added in the generator's own pattern. Pigeon 22.7.x rejects message classes
 // named "Pigeon*", so keep pigeons/usesense_api.dart and the .g files in step.
+// HAND-EDITED (2.11.0): UseSenseHostApi.startVerificationWithToken
+// (clientToken, sessionType as its raw int) added in the same pattern.
 
 import Foundation
 
@@ -18,6 +20,7 @@ import FlutterMacOS
 protocol UseSenseHostApi {
   func initialize(config: PigeonUseSenseConfig, completion: @escaping (Result<Void, Error>) -> Void)
   func startVerification(request: PigeonVerificationRequest, completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void)
+  func startVerificationWithToken(clientToken: String, sessionType: PigeonSessionType, completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void)
   func startRemoteEnrollment(remoteEnrollmentId: String, completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void)
   func startRemoteVerification(remoteSessionId: String, completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void)
   func isInitialized() throws -> Bool
@@ -400,6 +403,29 @@ func UseSenseHostApiSetup(_ binaryMessenger: FlutterBinaryMessenger, _ api: UseS
     }
   } else {
     startVerificationChannel.setMessageHandler(nil)
+  }
+
+  let startVerificationWithTokenChannel = FlutterBasicMessageChannel(
+    name: "dev.flutter.pigeon.usesense_flutter.UseSenseHostApi.startVerificationWithToken\(suffix)",
+    binaryMessenger: binaryMessenger,
+    codec: codec
+  )
+  if let api = api {
+    startVerificationWithTokenChannel.setMessageHandler { message, reply in
+      let args = message as! [Any?]
+      let clientTokenArg = args[0] as! String
+      let sessionTypeArg = PigeonSessionType(rawValue: args[1] as! Int)!
+      api.startVerificationWithToken(clientToken: clientTokenArg, sessionType: sessionTypeArg) { result in
+        switch result {
+        case .success(let res):
+          reply(wrapResult(res.toList()))
+        case .failure(let error):
+          reply(wrapError(error))
+        }
+      }
+    }
+  } else {
+    startVerificationWithTokenChannel.setMessageHandler(nil)
   }
 
   let startRemoteEnrollmentChannel = FlutterBasicMessageChannel(

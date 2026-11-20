@@ -17,12 +17,25 @@ and error handling.
    (`sk_prod_*`); leave it off for sandbox (`sk_sandbox_*`).
 7. Tap **Enroll** to run a first-time enrollment, or paste an existing
    Identity ID and tap **Authenticate** to run an authentication session.
+8. Tap **Client token and embedded capture** to try the client-token start
+   (no API key on the device) and the embedded `UseSenseView`. Paste a
+   `client_token` your server created, or leave the field empty and the
+   screen mints one with the key above (demo only: in production your server
+   calls `POST /v1/sessions/create-token`).
+
+The `android/` and `ios/` folders are not committed: run
+`flutter create --platforms=android,ios .` first, set `minSdk = 28` in
+`android/app/build.gradle.kts`, and for the embedded view change
+`MainActivity` to extend `FlutterFragmentActivity`.
 
 ## What This Demonstrates
 
 - SDK initialization with sandbox configuration
 - Enrollment session (first-time face registration)
 - Authentication session (returning user verification with identity ID)
+- Client-token sessions via `startVerificationWithToken` (full screen) and
+  `UseSenseView.withToken` (embedded)
+- The capture embedded in an app screen via `UseSenseView`
 - Real-time event streaming via `UseSenseFlutter.onEvent`
 - Error handling with retry guidance for all error codes
 - Result display with decision badge and session details

@@ -9,6 +9,7 @@ import 'package:usesense_flutter/usesense_flutter.dart';
 import '../widgets/event_tile.dart';
 import 'device_check_screen.dart';
 import 'result_screen.dart';
+import 'token_screen.dart';
 
 // Keys for shared_preferences persistence. Match the semantics of iOS's
 // @AppStorage("apiKey") and Android's SharedPreferences("api_key").
@@ -441,6 +442,21 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               icon: const Icon(Icons.phonelink_lock),
               label: const Text('Silent device check (Your KYC)'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => TokenScreen(
+                    useSense: widget.useSense,
+                    apiKey: _apiKeyController.text.trim(),
+                    useProduction: _useProduction,
+                    ensureInitialized: _ensureInitialized,
+                  ),
+                ),
+              ),
+              icon: const Icon(Icons.key_off),
+              label: const Text('Client token and embedded capture'),
             ),
             const SizedBox(height: 16),
 

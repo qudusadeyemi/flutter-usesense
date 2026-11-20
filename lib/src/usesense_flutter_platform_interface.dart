@@ -34,6 +34,18 @@ abstract class UseSenseFlutterPlatform extends PlatformInterface {
   /// Start a verification session.
   Future<UseSenseResult> startVerification(VerificationRequest request);
 
+  /// Start a verification session from a single-use client token (server-side
+  /// init). Platform implementations that predate it throw
+  /// [UnimplementedError].
+  Future<UseSenseResult> startVerificationWithToken({
+    required String clientToken,
+    required SessionType sessionType,
+  }) {
+    throw UnimplementedError(
+      'startVerificationWithToken() has not been implemented.',
+    );
+  }
+
   /// Start a remote enrollment flow.
   Future<UseSenseResult> startRemoteEnrollment(String remoteEnrollmentId);
 

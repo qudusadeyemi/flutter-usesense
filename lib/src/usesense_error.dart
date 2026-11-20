@@ -56,6 +56,12 @@ class UseSenseError implements Exception {
   /// Invalid SDK configuration.
   static const int invalidConfig = 5001;
 
+  /// The client token was rejected (unknown, expired or already used). The
+  /// reason is in [serverCode]: `token_not_found`, `token_expired`,
+  /// `token_already_used` or `invalid_token`. Tokens are single use: ask your
+  /// server for a new one.
+  static const int invalidClientToken = 5002;
+
   /// Organization quota exceeded.
   static const int quotaExceeded = 6001;
 
@@ -103,6 +109,11 @@ class UseSenseError implements Exception {
         return encodingFailed;
       case 'invalid_config':
         return invalidConfig;
+      case 'token_not_found':
+      case 'token_expired':
+      case 'token_already_used':
+      case 'invalid_token':
+        return invalidClientToken;
       case 'quota_exceeded':
         return quotaExceeded;
       case 'sdk_not_initialized':
@@ -113,6 +124,10 @@ class UseSenseError implements Exception {
         return -1;
     }
   }
+
+  /// Whether [code] is a native client-token rejection code.
+  static bool isClientTokenCode(String code) =>
+      codeFromString(code) == invalidClientToken;
 
   @override
   String toString() =>

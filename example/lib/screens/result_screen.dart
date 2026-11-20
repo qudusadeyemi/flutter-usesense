@@ -24,6 +24,10 @@ class ResultScreen extends StatelessWidget {
       decisionColor = colors.error;
       decisionIcon = Icons.cancel;
       decisionLabel = 'Rejected';
+    } else if (result.decision == 'DISPUTED') {
+      decisionColor = colors.error;
+      decisionIcon = Icons.report;
+      decisionLabel = 'Disputed';
     } else {
       decisionColor = Colors.amber.shade700;
       decisionIcon = Icons.hourglass_top;

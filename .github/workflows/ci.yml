@@ -144,6 +144,11 @@ jobs:
           flutter create --platforms=android .
           flutter pub get
           sed -i -E 's/minSdk(Version)? *=? *[a-zA-Z0-9_.().]+/minSdk = 28/' android/app/build.gradle.kts
+          # UseSenseView hosts the native UseSenseFragment, which needs a
+          # FragmentActivity: flutter create scaffolds a FlutterActivity.
+          find android/app/src/main -name MainActivity.kt -exec sed -i \
+            -e 's/embedding.android.FlutterActivity/embedding.android.FlutterFragmentActivity/' \
+            -e 's/: FlutterActivity()/: FlutterFragmentActivity()/' {} +
 
       - name: Build Android example (release)
         run: flutter build apk --release

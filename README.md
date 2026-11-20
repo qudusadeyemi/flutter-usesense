@@ -16,8 +16,8 @@ Sense verifies human presence through three pillars:
 
 | Requirement | Minimum Version |
 |-------------|----------------|
-| Flutter | 3.16+ |
-| Dart | 3.2+ |
+| Flutter | 3.22+ |
+| Dart | 3.4+ |
 | iOS | 16.0+ |
 | Xcode | 15.0+ |
 | Android | API 28+ (Android 9.0; native SDK requires API 28) |
@@ -106,6 +106,18 @@ allprojects {
 }
 ```
 
+**Embedded capture (`UseSenseView`) only:** the view hosts the native
+`UseSenseFragment`, so your `MainActivity` must be a `FragmentActivity`:
+
+```kotlin
+import io.flutter.embedding.android.FlutterFragmentActivity
+
+class MainActivity : FlutterFragmentActivity()
+```
+
+The full-screen methods work with either `FlutterActivity` or
+`FlutterFragmentActivity`.
+
 Add the required permissions to `android/app/src/main/AndroidManifest.xml`:
 
 ```xml
@@ -149,6 +161,86 @@ try {
 // 4. Clean up when done
 useSense.dispose();
 ```
+
+---
+
+## Keep the API key off the device (client tokens)
+
+Instead of shipping an API key in the app, your server creates the session
+and gives the app a single-use client token:
+
+1. Your server calls `POST /v1/sessions/create-token` with its secret key and
+   the session details (`session_type`, `identity_id` for authentication,
+   `external_user_id`, `metadata`, a reference image for photo match, ...).
+   It returns `{ "client_token": "...", "expires_at": "..." }`.
+2. The app passes the token to the SDK, which exchanges it
+   (`POST /v1/sessions/exchange-token`) and runs the normal capture.
+
+```dart
+final clientToken = await myBackend.createUseSenseToken(); // your API
+
+try {
+  final result = await useSense.startVerificationWithToken(
+    clientToken: clientToken,
+    sessionType: SessionType.enrollment, // the type your server used
+  );
+  print(result.decision);
+} on UseSenseError catch (e) {
+  if (e.code == UseSenseError.invalidClientToken) {
+    // e.serverCode: token_not_found, token_expired, token_already_used or
+    // invalid_token. Tokens are single use: get a new one to try again.
+  }
+}
+```
+
+`initialize()` is optional for token sessions. When you call it, its
+environment, base URL, branding and capture options apply; a token-only app
+can pass `apiKey: ''` to set those without a key. The result, events and the
+other errors are the same as `startVerification`.
+
+---
+
+## Embed the capture in your own screen (`UseSenseView`)
+
+`UseSenseView` runs the verification inside your layout instead of a
+full-screen modal. It uses the same screens, `BrandingConfig` (appearance and
+copy, your code over the dashboard) and capture options from `initialize()`.
+
+```dart
+Scaffold(
+  appBar: AppBar(title: const Text('Verify it is you')),
+  body: UseSenseView(
+    request: const VerificationRequest(sessionType: SessionType.enrollment),
+    onResult: (result) => Navigator.of(context).pop(result),
+    onError: (error) => showError(error), // same UseSenseError as startVerification
+    onCancelled: () => Navigator.of(context).pop(),
+  ),
+)
+
+// Or from a client token, with no API key on the device:
+UseSenseView.withToken(
+  clientToken: clientToken,
+  sessionType: SessionType.authentication,
+  onResult: ...,
+)
+```
+
+- The verification starts when the widget is first built. Exactly one of
+  `onResult`, `onError` or `onCancelled` fires; remove the widget (pop the
+  route) in it.
+- Disposing the widget mid-capture stops the camera and the session; no
+  callback fires.
+- Give it the space the camera should fill; full screen under your app bar
+  works best.
+- Camera and microphone permissions are requested by the capture, as in the
+  full-screen flow.
+- **Android:** `MainActivity` must extend `FlutterFragmentActivity` (see
+  [Android Setup](#android-setup)); otherwise `onError` reports
+  `unsupported_activity`. The view uses hybrid composition. The system back
+  gesture goes to the capture while it runs: mid-capture it asks before
+  leaving, otherwise it ends as cancelled.
+- **iOS:** the capture has its own close button (`onCancelled`). A route pop
+  is not intercepted; it disposes the view.
 
 ---
 
@@ -362,7 +454,7 @@ final result = await useSense.startVerification(
 
 ### Remote Sessions
 
-For server-initiated flows, use the remote methods with a pre-created session or enrollment ID from your backend:
+For server-initiated flows, use the remote methods with a pre-created session or enrollment ID from your backend. The future completes with the decision when the person finishes (`APPROVE`, `REJECT`, `MANUAL_REVIEW`, or `DISPUTED` when they dispute a remote verification), or throws `UseSenseError` (`sessionCancelled` when they leave):
 
 ```dart
 // Remote enrollment
@@ -561,7 +653,8 @@ try {
 | 3002 | `uploadFailed` | Yes | Data upload to server failed. |
 | 4001 | `captureFailed` | No | Camera frame capture failed. |
 | 4002 | `encodingFailed` | No | Frame encoding failed. |
-| 5001 | `invalidConfig` | No | Invalid SDK configuration (e.g. missing or malformed API key). |
+| 5001 | `invalidConfig` | No | Invalid SDK configuration (e.g. missing or malformed API key, blank client token). |
+| 5002 | `invalidClientToken` | No | The client token was rejected; the reason is in `serverCode` (`token_not_found`, `token_expired`, `token_already_used`, `invalid_token`). Get a new token. |
 | 6001 | `quotaExceeded` | No | Organization verification quota exceeded. |
 | 7001 | `sdkNotInitialized` | No | `initialize()` was not called before a verification method. |
 | 8001 | `sessionCancelled` | No | User cancelled the verification session. |
