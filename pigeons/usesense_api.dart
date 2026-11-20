@@ -251,6 +251,19 @@ abstract class UseSenseHostApi {
   @async
   PigeonUseSenseResult startVerification(PigeonVerificationRequest request);
 
+  /// Start a verification session from a single-use client token.
+  ///
+  /// The integrator's server calls `POST /v1/sessions/create-token` with its
+  /// secret key and passes the `client_token` to the app; the native SDK
+  /// exchanges it (`POST /v1/sessions/exchange-token`), so no API key is
+  /// needed on the device. Same full-screen UI and result as
+  /// [startVerification].
+  @async
+  PigeonUseSenseResult startVerificationWithToken(
+    String clientToken,
+    PigeonSessionType sessionType,
+  );
+
   /// Start a remote enrollment flow using a pre-created enrollment ID.
   @async
   PigeonUseSenseResult startRemoteEnrollment(String remoteEnrollmentId);

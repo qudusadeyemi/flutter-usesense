@@ -46,6 +46,29 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
   }
 
   @override
+  Future<UseSenseResult> startVerificationWithToken({
+    required String clientToken,
+    required SessionType sessionType,
+  }) async {
+    final token = clientToken.trim();
+    if (token.isEmpty) {
+      throw const UseSenseError(
+        code: UseSenseError.invalidConfig,
+        message: 'clientToken must not be blank.',
+      );
+    }
+    try {
+      final result = await _hostApi.startVerificationWithToken(
+        token,
+        PigeonSessionType.values[sessionType.index],
+      );
+      return _fromPigeonResult(result);
+    } on PlatformException catch (e) {
+      throw _wrapError(e);
+    }
+  }
+
+  @override
   Future<UseSenseResult> startRemoteEnrollment(
     String remoteEnrollmentId,
   ) async {
@@ -268,9 +291,13 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
     );
   }
 
-  UseSenseError _wrapError(PlatformException e) {
+  UseSenseError _wrapError(PlatformException e) => wrapPlatformError(e);
+
+  /// The [UseSenseError] for a native error. Shared with [UseSenseView].
+  static UseSenseError wrapPlatformError(PlatformException e) {
     return UseSenseError(
       code: UseSenseError.codeFromString(e.code),
+      serverCode: UseSenseError.isClientTokenCode(e.code) ? e.code : null,
       message: e.message ?? 'An unknown error occurred.',
       isRetryable: _isRetryableCode(e.code),
       details:
@@ -278,7 +305,7 @@ class MethodChannelUseSenseFlutter extends UseSenseFlutterPlatform
     );
   }
 
-  bool _isRetryableCode(String code) {
+  static bool _isRetryableCode(String code) {
     return code == 'network_error' ||
         code == 'network_timeout' ||
         code == 'upload_failed';

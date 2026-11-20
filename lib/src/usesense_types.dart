@@ -171,6 +171,8 @@ class UseSenseResult {
   final String? identityId;
 
   /// The verification decision: `APPROVE`, `REJECT`, or `MANUAL_REVIEW`.
+  /// A remote verification can also end `DISPUTED`, when the person disputes
+  /// the action instead of verifying it.
   final String decision;
 
   /// ISO 8601 timestamp of the decision.

@@ -61,6 +61,12 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
             deviceCheckBridge.handle(call: call, result: result)
         }
         instance.deviceCheckChannel = deviceCheckChannel
+
+        // J2: UseSenseView, the capture embedded in a Flutter screen.
+        registrar.register(
+            UseSenseViewFactory(messenger: registrar.messenger(), plugin: instance),
+            withId: UseSenseViewFactory.viewType
+        )
     }
 
     private var v4Channel: FlutterMethodChannel?
@@ -210,42 +216,86 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
         )
 
         let session = client.startVerification(request: nativeRequest)
+        present(session: session, on: rootVC, completion: completion)
+    }
 
-        // Present the SDK's camera UI as a full-screen modal.
+    func startVerificationWithToken(clientToken: String, sessionType: PigeonSessionType, completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void) {
+        let token = clientToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !token.isEmpty else {
+            completion(.failure(PigeonError(
+                code: "invalid_config",
+                message: "clientToken must not be blank.",
+                details: nil
+            )))
+            return
+        }
+        guard let rootVC = UIApplication.shared.delegate?.window??.rootViewController else {
+            completion(.failure(PigeonError(
+                code: "sdk_not_initialized",
+                message: "Root view controller is not available.",
+                details: nil
+            )))
+            return
+        }
+        // initialize() is optional for a token session: the client token
+        // authenticates exchange-token, so no API key is needed on the device.
+        let session = tokenClient().createSessionWithToken(
+            clientToken: token,
+            sessionType: Self.nativeSessionType(sessionType)
+        )
+        present(session: session, on: rootVC, completion: completion)
+    }
+
+    /// The client a token session runs on: initialize()'s (its endpoint,
+    /// environment and branding), else the defaults with no key.
+    func tokenClient() -> UseSense {
+        client ?? UseSense(config: UseSenseConfig(apiKey: ""))
+    }
+
+    /// The client an API-key session runs on, or nil before initialize().
+    var apiKeyClient: UseSense? { client }
+
+    static func nativeSessionType(_ type: PigeonSessionType) -> SessionType {
+        switch type {
+        case .enrollment: return .enrollment
+        case .authentication: return .authentication
+        case .liveness: return .liveness
+        }
+    }
+
+    /// Present the SDK's camera UI full screen and settle the pigeon call once.
+    private func present(
+        session: UseSenseSession,
+        on rootVC: UIViewController,
+        completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void
+    ) {
         let vc = UseSenseViewController(session: session) { [weak self] result in
             DispatchQueue.main.async {
                 rootVC.dismiss(animated: true)
                 switch result {
                 case .success(let decision):
-                    let pigeonResult = PigeonUseSenseResult(
-                        sessionId: decision.sessionId,
-                        sessionType: decision.sessionType,
-                        identityId: decision.identityId,
-                        decision: decision.decision,
-                        timestamp: decision.timestamp
-                    )
-                    completion(.success(pigeonResult))
+                    completion(.success(Self.pigeonResult(decision)))
                 case .failure(let error):
                     if error.code == .userCancelled {
                         self?.flutterApi?.onCancelled { _ in }
-                        completion(.failure(PigeonError(
-                            code: "session_cancelled",
-                            message: "User cancelled the verification session.",
-                            details: nil
-                        )))
-                    } else {
-                        completion(.failure(self?.mapError(error) ?? PigeonError(
-                            code: "sdk_error",
-                            message: error.localizedDescription,
-                            details: nil
-                        )))
                     }
+                    completion(.failure(Self.mapError(error)))
                 }
             }
         }
 
         vc.modalPresentationStyle = .fullScreen
         rootVC.present(vc, animated: true)
+    }
+
+    static func pigeonResult(_ decision: RedactedDecisionObject) -> PigeonUseSenseResult {
+        PigeonUseSenseResult(
+            sessionId: decision.sessionId,
+            sessionType: decision.sessionType,
+            identityId: decision.identityId,
+            decision: decision.decision,
+            timestamp: decision.timestamp
+        )
     }
 
     func startRemoteEnrollment(remoteEnrollmentId: String, completion: @escaping (Result<PigeonUseSenseResult, Error>) -> Void) {
@@ -284,11 +334,7 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
                         timestamp: ISO8601DateFormatter().string(from: Date())
                     )))
                 case .failure(let error):
-                    completion(.failure(self?.mapError(error) ?? PigeonError(
-                        code: "sdk_error",
-                        message: error.localizedDescription,
-                        details: nil
-                    )))
+                    completion(.failure(Self.mapError(error)))
                 }
             }
         }
@@ -332,11 +378,7 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
                         timestamp: ISO8601DateFormatter().string(from: Date())
                     )))
                 case .failure(let error):
-                    completion(.failure(self?.mapError(error) ?? PigeonError(
-                        code: "sdk_error",
-                        message: error.localizedDescription,
-                        details: nil
-                    )))
+                    completion(.failure(Self.mapError(error)))
                 }
             }
         }
@@ -394,7 +436,19 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
         flutterApi?.onEvent(event: pigeonEvent) { _ in }
     }
 
-    private func mapError(_ error: UseSenseError) -> PigeonError {
+    static func mapError(_ error: UseSenseError) -> PigeonError {
+        if error.code == .userCancelled {
+            return PigeonError(
+                code: "session_cancelled",
+                message: "User cancelled the verification session.",
+                details: nil
+            )
+        }
+        return PigeonError(code: errorCode(error), message: error.message, details: error.details)
+    }
+
+    /// The Flutter error code for [error] (the strings UseSenseError.codeFromString reads).
+    static func errorCode(_ error: UseSenseError) -> String {
         let code: String
         switch error.code {
         case .cameraUnavailable: code = "camera_unavailable"
@@ -429,7 +483,7 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
         case .unknownError: code = "sdk_error"
         @unknown default: code = "sdk_error"
         }
-        return PigeonError(code: code, message: error.message, details: error.details)
+        return code
     }
 
     /// The pigeon map (camelCase JSON-compatible values) as the JSON object the
