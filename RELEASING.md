@@ -22,12 +22,13 @@ wrappers once, after the native SDKs they need are published.
 2. **Wait for the registries.** Maven Central and the CocoaPods CDN version
    index lag the publish by minutes (the index file is cached for up to 10
    minutes). `python3 scripts/native_pins.py wait` in a wrapper waits for both.
-3. **Wrappers.** When a native release finishes, it dispatches
-   `native-sdk-released` to both wrappers; their `bump-native-pins.yml` opens a
-   `bot/native-pins` PR that moves every pin (Gradle, podspec, README, the React
-   Native example `Podfile.lock`) to the latest native SDKs, bumps the wrapper's
-   patch version and adds a CHANGELOG line. Merge it, then tag the wrapper
-   (`release.yml`).
+3. **Wrappers.** Every hour, each wrapper's `bump-native-pins.yml` checks the
+   registries. Once a newer native release is installable it opens (or
+   refreshes) a `bot/native-pins` PR that moves every pin (Gradle, podspec,
+   README, the React Native example `Podfile.lock`) to it, bumps the wrapper's
+   patch version, adds a CHANGELOG line and starts CI on the branch. Merge it,
+   then tag the wrapper (`release.yml`). To skip the wait, run the workflow by
+   hand (Actions, Bump native SDK pins, Run workflow).
 
 ## Guards
 
@@ -39,13 +40,14 @@ wrappers once, after the native SDKs they need are published.
   `scripts/native_pins.py`. If you add another, add it there too, or the check
   reports it as missing.
 
-## Secrets
+## No stored tokens
 
-One fine-grained GitHub token, saved as **`USESENSE_BOT_TOKEN`** in all four
-repos (`usesense-android-sdk`, `usesense-ios-sdk`, `flutter-usesense`,
-`react-native-usesense`), with access to `flutter-usesense` and
-`react-native-usesense` and the permissions **Contents: read and write** and
-**Pull requests: read and write**. The native repos use it to dispatch the bump;
-the wrappers use it to open the bump PR so its CI runs (a PR opened with the
-default `GITHUB_TOKEN` does not trigger workflows). Without it the daily run
-still opens the PR, but you have to push to it once to start CI.
+The automation uses only each run's built-in `GITHUB_TOKEN` (scoped to that
+repo, expires with the run). There is no personal or cross-repo token to leak.
+A PR opened with `GITHUB_TOKEN` does not start `pull_request` workflows, so the
+bump run starts `ci.yml` and `native-pins.yml` on its branch with
+`workflow_dispatch`; their checks show on the PR.
+
+Publishing stays in your hands: pushing a `v*` tag is what releases each SDK.
+Protect `v*` tags and `main` in every SDK repo (Settings, Rules, Rulesets) so
+only maintainers can tag or merge.

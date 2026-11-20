@@ -58,12 +58,12 @@ The plugin always pins the **latest** native SDKs:
 
 `scripts/native_pins.py` lists every place a native version appears and CI
 (`native-pins.yml`) fails when any of them is behind Maven Central or CocoaPods.
-A native release opens a `bot/native-pins` PR here automatically
-(`bump-native-pins.yml`). See RELEASING.md.
+An hourly job (`bump-native-pins.yml`) opens a `bot/native-pins` PR here once a
+newer native release is installable. See RELEASING.md.
 
 When the native SDKs ship a new version (every native release, bug fixes included):
 
-1. A `bot/native-pins` PR opens here automatically. To do it by hand: `python3 scripts/native_pins.py bump`.
+1. A `bot/native-pins` PR opens here within the hour. To do it by hand: `python3 scripts/native_pins.py bump`.
 2. `python3 scripts/native_pins.py check` must pass (CI runs it on every PR).
 3. If the native SDK public API changed, update `ios/Classes/UseSenseFlutterPlugin.swift` and `android/src/main/kotlin/com/usesense/flutter/UseSenseFlutterPlugin.kt` to match.
 4. Run `flutter analyze` and `flutter test` to catch any Dart-side drift.
