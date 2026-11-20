@@ -1,0 +1,77 @@
+name: Bump native SDK pins
+
+# Opens (or refreshes) one PR that moves every native pin in this wrapper to the
+# latest native SDKs, the moment they are installable. Triggered by the native
+# release workflows (repository_dispatch "native-sdk-released"); the daily run is
+# a safety net. Needs the USESENSE_BOT_TOKEN secret so the PR runs CI (pull
+# requests opened with GITHUB_TOKEN do not trigger workflows). See RELEASING.md.
+on:
+  repository_dispatch:
+    types: [native-sdk-released]
+  schedule:
+    - cron: "30 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: bump-native-pins
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.USESENSE_BOT_TOKEN || github.token }}
+
+      - name: Wait until the latest native versions are installable
+        run: python3 scripts/native_pins.py wait --minutes 60
+
+      - name: Move every pin to the latest native SDKs
+        id: pins
+        run: |
+          python3 scripts/native_pins.py bump
+          if git diff --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Version and CHANGELOG
+        if: steps.pins.outputs.changed == 'true'
+        id: version
+        run: |
+          echo "version=$(python3 scripts/native_pins.py bump-patch | tail -1)" >> "$GITHUB_OUTPUT"
+          python3 scripts/native_pins.py changelog
+
+      - name: Verify
+        if: steps.pins.outputs.changed == 'true'
+        run: python3 scripts/native_pins.py check
+
+      - name: Open or update the PR
+        if: steps.pins.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.USESENSE_BOT_TOKEN || github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          HAS_BOT_TOKEN: ${{ secrets.USESENSE_BOT_TOKEN != '' }}
+        run: |
+          latest="$(python3 scripts/native_pins.py latest | paste -sd' ' -)"
+          git config user.name "usesense-bot"
+          git config user.email "bot@usesense.ai"
+          git switch -C bot/native-pins
+          git add -A
+          git commit -m "chore: pin the latest native SDKs ($latest)" -m "Automated by .github/workflows/bump-native-pins.yml."
+          git push -f origin bot/native-pins
+          body="Moves every native pin to the latest native SDKs ($latest) and sets this package to $VERSION.
+
+          Opened by bump-native-pins.yml after the native release became installable. Merge, then release this wrapper (see RELEASING.md)."
+          if gh pr view bot/native-pins --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit bot/native-pins --title "chore: pin the latest native SDKs ($latest)" --body "$body"
+          else
+            gh pr create --base main --head bot/native-pins --title "chore: pin the latest native SDKs ($latest)" --body "$body"
+          fi
+          if [ "$HAS_BOT_TOKEN" != "true" ]; then
+            echo "::warning::USESENSE_BOT_TOKEN is not set: the PR was opened with GITHUB_TOKEN, so CI will not run on it until someone pushes to the branch. Add the secret (RELEASING.md)."
+          fi

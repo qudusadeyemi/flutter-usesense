@@ -49,22 +49,27 @@ The pre-commit reminder: **if you edited `pigeons/usesense_api.dart`, run `dart 
 
 ### Native SDK version management
 
-The plugin depends on specific minimum versions of the native SDKs:
+The plugin always pins the **latest** native SDKs:
 
-| Platform | Manifest | Current floor | Recent native release notes |
-|----------|----------|---------------|----------------------------|
-| iOS | `ios/usesense_flutter.podspec` → `s.dependency 'UseSenseSDK', '~> 4.2'` | 4.2.2 | [iOS CHANGELOG](https://github.com/qudusadeyemi/usesense-ios-sdk/blob/main/CHANGELOG.md) |
-| Android | `android/build.gradle.kts` → `implementation("ai.usesense:sdk:4.2.1")` | 4.2.1 | [Android CHANGELOG](https://github.com/qudusadeyemi/usesense-android-sdk/blob/main/CHANGELOG.md) |
+| Platform | Pin | Release notes |
+|----------|-----|---------------|
+| iOS | `ios/usesense_flutter.podspec`: `s.dependency 'UseSenseSDK', '~> A.B.C'` | [iOS CHANGELOG](https://github.com/qudusadeyemi/usesense-ios-sdk/blob/main/CHANGELOG.md) |
+| Android | `android/build.gradle.kts`: `ai.usesense:sdk:A.B.C` | [Android CHANGELOG](https://github.com/qudusadeyemi/usesense-android-sdk/blob/main/CHANGELOG.md) |
 
-When the native SDKs ship a new version:
+`scripts/native_pins.py` lists every place a native version appears and CI
+(`native-pins.yml`) fails when any of them is behind Maven Central or CocoaPods.
+A native release opens a `bot/native-pins` PR here automatically
+(`bump-native-pins.yml`). See RELEASING.md.
 
-1. Check the CHANGELOG for each native repo and decide whether the plugin needs to bump (bug fixes usually don't; new public API or removed / renamed symbols do).
-2. Update the version strings in the two manifests above.
+When the native SDKs ship a new version (every native release, bug fixes included):
+
+1. A `bot/native-pins` PR opens here automatically. To do it by hand: `python3 scripts/native_pins.py bump`.
+2. `python3 scripts/native_pins.py check` must pass (CI runs it on every PR).
 3. If the native SDK public API changed, update `ios/Classes/UseSenseFlutterPlugin.swift` and `android/src/main/kotlin/com/usesense/flutter/UseSenseFlutterPlugin.kt` to match.
 4. Run `flutter analyze` and `flutter test` to catch any Dart-side drift.
 5. Bump `pubspec.yaml` version, add a CHANGELOG entry, tag, push.
 
-The plugin version is tracked separately from the native SDK versions (plugin SemVer doesn't follow native SemVer), but the plugin is always published with a pinned native floor in each manifest.
+The plugin version is tracked separately from the native SDK versions (plugin SemVer doesn't follow native SemVer), but each release pins the latest native SDKs.
 
 ### Release process
 

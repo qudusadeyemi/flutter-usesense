@@ -22,19 +22,22 @@ void main() {
     expect(gradle, contains('version = "$packageVersion"'));
   });
 
-  test('published package requires iOS SDK 4.14.0 and Android SDK 4.16.0', () {
+  // Which native versions are pinned is checked against Maven Central and
+  // CocoaPods by scripts/native_pins.py (CI: native-pins.yml), so no version
+  // number is repeated here to drift. This only checks the pins' shape.
+  test('native SDK pins have the shape the release relies on', () {
     final podspec = readPackageFile('ios/usesense_flutter.podspec');
     final gradle = readPackageFile('android/build.gradle.kts');
 
     expect(
-      podspec,
-      contains("s.dependency 'UseSenseSDK', '~> 4.14.0'"),
-      reason: 'The CocoaPods constraint must require 4.14.0 but not 4.15.x.',
+      RegExp(r"s\.dependency 'UseSenseSDK', '~> \d+\.\d+\.\d+'").hasMatch(podspec),
+      isTrue,
+      reason: 'iOS: pin with ~> A.B.C so the patch range is explicit.',
     );
     expect(
-      gradle,
-      contains('implementation("ai.usesense:sdk:4.16.0")'),
-      reason: 'The Android artifact must be pinned exactly to 4.16.0.',
+      RegExp(r'implementation\("ai\.usesense:sdk:\d+\.\d+\.\d+"\)').hasMatch(gradle),
+      isTrue,
+      reason: 'Android: pin an exact version.',
     );
   });
 }
