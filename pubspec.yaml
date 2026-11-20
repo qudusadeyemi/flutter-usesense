@@ -6,7 +6,7 @@ description: >
 version: 2.11.0
 homepage: https://usesense.ai
 repository: https://github.com/qudusadeyemi/flutter-usesense
-documentation: https://watchtower.usesense.ai/developer-docs
+documentation: https://docs.usesense.ai
 topics:
   - verification
   - kyc
