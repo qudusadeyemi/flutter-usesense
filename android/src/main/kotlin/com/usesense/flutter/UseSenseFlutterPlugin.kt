@@ -125,6 +125,12 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
         deviceCheckBridge = dcBridge
         deviceCheckChannel = MethodChannel(binding.binaryMessenger, "com.usesense.flutter/device_check")
         deviceCheckChannel?.setMethodCallHandler { call, result -> dcBridge.handle(call, result) }
+
+        // J2: UseSenseView, the capture embedded in a Flutter screen.
+        binding.platformViewRegistry.registerViewFactory(
+            UseSenseViewFactory.VIEW_TYPE,
+            UseSenseViewFactory(binding.binaryMessenger) { activity },
+        )
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -245,10 +251,7 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
             return
         }
 
-        val sessionType = when (request.sessionType) {
-            PigeonSessionType.ENROLLMENT -> SessionType.ENROLLMENT
-            PigeonSessionType.AUTHENTICATION -> SessionType.AUTHENTICATION
-        }
+        val sessionType = UseSenseMapping.sessionType(request.sessionType)
 
         val nativeRequest = VerificationRequest(
             sessionType = sessionType,
@@ -260,26 +263,27 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
             },
         )
 
-        UseSense.startVerification(currentActivity, nativeRequest, object : UseSenseCallback {
-            override fun onSuccess(result: UseSenseResult) {
-                mainHandler.post {
-                    callback(Result.success(mapResultToPigeon(result)))
-                }
-            }
+        UseSense.startVerification(currentActivity, nativeRequest, resultCallback(callback))
+    }
 
-            override fun onError(error: UseSenseError) {
-                mainHandler.post {
-                    callback(Result.failure(mapErrorToFlutter(error)))
-                }
-            }
-
-            override fun onCancelled() {
-                mainHandler.post {
-                    flutterApi?.onCancelled {}
-                    callback(Result.failure(FlutterError("session_cancelled", "User cancelled the verification session.", null)))
-                }
-            }
-        })
+    override fun startVerificationWithToken(
+        clientToken: String,
+        sessionType: PigeonSessionType,
+        callback: (Result<PigeonUseSenseResult>) -> Unit,
+    ) {
+        val currentActivity = activity
+        if (currentActivity == null) {
+            callback(Result.failure(FlutterError("sdk_not_initialized", "Activity is not available. Ensure the plugin is attached to an Activity.", null)))
+            return
+        }
+        // initialize() is optional for a token session: the client token
+        // authenticates the exchange, so no API key is needed on the device.
+        UseSense.startVerificationWithToken(
+            currentActivity,
+            clientToken,
+            UseSenseMapping.sessionType(sessionType),
+            resultCallback(callback),
+        )
     }
 
     override fun startRemoteEnrollment(
@@ -296,15 +300,12 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
             return
         }
 
-        // The native SDK handles the hosted page flow internally.
-        // We use startRemoteEnrollment which launches a HostedPageActivity.
-        // The callback is handled via the event system – we listen for the
-        // DECISION_RECEIVED event to resolve this future.
+        // The hosted flow reports its outcome through the callback (Android
+        // SDK 4.16.0): the decision, an error, or a cancel when the person
+        // leaves. Launch from the Activity when there is one so it stacks on
+        // the app's task.
         try {
-            UseSense.startRemoteEnrollment(ctx, remoteEnrollmentId)
-            // Remote flows resolve via events – we set up a one-shot listener
-            // to capture the result and resolve the callback.
-            listenForSessionResult(callback)
+            UseSense.startRemoteEnrollment(activity ?: ctx, remoteEnrollmentId, resultCallback(callback))
         } catch (e: Exception) {
             callback(Result.failure(FlutterError("sdk_error", e.message, null)))
         }
@@ -325,8 +326,7 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
         }
 
         try {
-            UseSense.startRemoteVerification(ctx, remoteSessionId)
-            listenForSessionResult(callback)
+            UseSense.startRemoteVerification(activity ?: ctx, remoteSessionId, resultCallback(callback))
         } catch (e: Exception) {
             callback(Result.failure(FlutterError("sdk_error", e.message, null)))
         }
@@ -346,33 +346,28 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
     // Private helpers
     // -------------------------------------------------------------------------
 
-    private fun listenForSessionResult(callback: (Result<PigeonUseSenseResult>) -> Unit) {
-        var unsubscribe: (() -> Unit)? = null
-        unsubscribe = UseSense.onEvent { event ->
-            when (event.type) {
-                EventType.DECISION_RECEIVED -> {
-                    unsubscribe?.invoke()
-                    val data = event.data ?: emptyMap()
-                    val result = PigeonUseSenseResult(
-                        sessionId = data["sessionId"]?.toString() ?: "",
-                        sessionType = data["sessionType"]?.toString(),
-                        identityId = data["identityId"]?.toString(),
-                        decision = data["decision"]?.toString() ?: "REJECT",
-                        timestamp = data["timestamp"]?.toString() ?: "",
-                    )
-                    mainHandler.post { callback(Result.success(result)) }
+    /**
+     * The native callback that settles a pigeon start call: the decision, the
+     * mapped error, or `session_cancelled` (also sent on the cancelled stream).
+     * The SDK calls it once; results go back on the main thread.
+     */
+    internal fun resultCallback(callback: (Result<PigeonUseSenseResult>) -> Unit): UseSenseCallback =
+        object : UseSenseCallback {
+            override fun onSuccess(result: UseSenseResult) {
+                mainHandler.post { callback(Result.success(UseSenseMapping.result(result))) }
+            }
+
+            override fun onError(error: UseSenseError) {
+                mainHandler.post { callback(Result.failure(UseSenseMapping.error(error))) }
+            }
+
+            override fun onCancelled() {
+                mainHandler.post {
+                    flutterApi?.onCancelled {}
+                    callback(Result.failure(UseSenseMapping.cancelled()))
                 }
-                EventType.ERROR -> {
-                    unsubscribe?.invoke()
-                    val msg = event.data?.get("message")?.toString() ?: "Session failed."
-                    mainHandler.post {
-                        callback(Result.failure(FlutterError("session_error", msg, null)))
-                    }
-                }
-                else -> { /* ignore other events */ }
             }
         }
-    }
 
     private fun mapEventToPigeon(event: UseSenseEvent): PigeonUseSenseEvent {
         val pigeonType = when (event.type) {
@@ -410,34 +405,6 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
             timestamp = event.timestamp,
             data = safeData,
         )
-    }
-
-    private fun mapResultToPigeon(result: UseSenseResult): PigeonUseSenseResult {
-        return PigeonUseSenseResult(
-            sessionId = result.sessionId,
-            sessionType = result.sessionType,
-            identityId = result.identityId,
-            decision = result.decision,
-            timestamp = result.timestamp,
-        )
-    }
-
-    private fun mapErrorToFlutter(error: UseSenseError): FlutterError {
-        val code = when (error.code) {
-            UseSenseError.CAMERA_UNAVAILABLE -> "camera_unavailable"
-            UseSenseError.CAMERA_PERMISSION_DENIED -> "camera_permission_denied"
-            UseSenseError.MICROPHONE_PERMISSION_DENIED -> "microphone_permission_denied"
-            UseSenseError.NETWORK_ERROR -> "network_error"
-            UseSenseError.NETWORK_TIMEOUT -> "network_timeout"
-            UseSenseError.SESSION_EXPIRED -> "session_expired"
-            UseSenseError.UPLOAD_FAILED -> "upload_failed"
-            UseSenseError.CAPTURE_FAILED -> "capture_failed"
-            UseSenseError.ENCODING_FAILED -> "encoding_failed"
-            UseSenseError.INVALID_CONFIG -> "invalid_config"
-            UseSenseError.QUOTA_EXCEEDED -> "quota_exceeded"
-            else -> "sdk_error"
-        }
-        return FlutterError(code, error.message, error.details)
     }
 
     /**

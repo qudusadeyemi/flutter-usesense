@@ -83,8 +83,37 @@ class UseSenseFlutter {
   /// For enrollment sessions, set [VerificationRequest.sessionType] to
   /// [SessionType.enrollment]. For authentication, use
   /// [SessionType.authentication] and provide [VerificationRequest.identityId].
+  /// For a liveness-only check (no enrolment, no duplicate search), use
+  /// [SessionType.liveness] without an identity id.
   Future<UseSenseResult> startVerification(VerificationRequest request) {
     return _platform.startVerification(request);
+  }
+
+  /// Start a verification session from a single-use [clientToken], so your
+  /// API key never ships in the app (server-side init).
+  ///
+  /// Your server calls `POST /v1/sessions/create-token` with its secret key
+  /// and the session type, then hands the returned `client_token` to the app.
+  /// The native SDK exchanges it (`POST /v1/sessions/exchange-token`) and runs
+  /// the same full-screen capture as [startVerification], with the same
+  /// result and errors. Pass the [sessionType] your server used.
+  ///
+  /// [initialize] is optional here. When it was called, its environment,
+  /// base URL, branding and capture options apply; a token-only app can pass
+  /// `apiKey: ''` to set those without a key.
+  ///
+  /// A rejected token throws [UseSenseError] with code
+  /// [UseSenseError.invalidClientToken] and the reason in
+  /// [UseSenseError.serverCode]. Tokens are single use, so fetch a new one to
+  /// try again.
+  Future<UseSenseResult> startVerificationWithToken({
+    required String clientToken,
+    SessionType sessionType = SessionType.authentication,
+  }) {
+    return _platform.startVerificationWithToken(
+      clientToken: clientToken,
+      sessionType: sessionType,
+    );
   }
 
   /// Start a remote enrollment flow using a pre-created [remoteEnrollmentId].

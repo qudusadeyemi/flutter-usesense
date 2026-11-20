@@ -3,6 +3,8 @@
 // HAND-EDITED (2.8.0): PigeonBrandingConfig.appearance / copy (indices 6, 7)
 // added in the generator's own pattern. Pigeon 22.7.x rejects message classes
 // named "Pigeon*", so keep pigeons/usesense_api.dart and the .g files in step.
+// HAND-EDITED (2.11.0): UseSenseHostApi.startVerificationWithToken
+// (clientToken, sessionType as its raw int) added in the same pattern.
 // ignore_for_file: public_member_api_docs, non_constant_identifier_names,
 //   avoid_as, unused_import, unnecessary_parenthesis, prefer_null_aware_operators,
 //   omit_local_variable_types, unused_shown_name, unnecessary_import,
@@ -25,6 +27,7 @@ enum PigeonUseSenseEnvironment {
 enum PigeonSessionType {
   enrollment,
   authentication,
+  liveness,
 }
 
 /// Event types emitted during a verification session.
@@ -427,6 +430,37 @@ class UseSenseHostApi {
     );
     final List<Object?>? pigeonVar_replyList = await pigeonVar_channel
         .send(<Object?>[remoteEnrollmentId]) as List<Object?>?;
+    if (pigeonVar_replyList == null) {
+      throw _createConnectionError(pigeonVar_channelName);
+    } else if (pigeonVar_replyList.length > 1) {
+      throw PlatformException(
+        code: pigeonVar_replyList[0]! as String,
+        message: pigeonVar_replyList[1] as String?,
+        details: pigeonVar_replyList[2],
+      );
+    } else if (pigeonVar_replyList[0] == null) {
+      throw PlatformException(
+        code: 'null-error',
+        message: 'Host platform returned null value for non-null return value.',
+      );
+    } else {
+      return (pigeonVar_replyList[0] as PigeonUseSenseResult?)!;
+    }
+  }
+
+  /// Start a verification session from a single-use client token.
+  Future<PigeonUseSenseResult> startVerificationWithToken(
+      String clientToken, PigeonSessionType sessionType) async {
+    final String pigeonVar_channelName =
+        'dev.flutter.pigeon.usesense_flutter.UseSenseHostApi.startVerificationWithToken$pigeonVar_messageChannelSuffix';
+    final BasicMessageChannel<Object?> pigeonVar_channel =
+        BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final List<Object?>? pigeonVar_replyList = await pigeonVar_channel
+        .send(<Object?>[clientToken, sessionType.index]) as List<Object?>?;
     if (pigeonVar_replyList == null) {
       throw _createConnectionError(pigeonVar_channelName);
     } else if (pigeonVar_replyList.length > 1) {

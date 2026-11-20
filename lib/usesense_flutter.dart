@@ -22,6 +22,8 @@ export 'src/usesense_error.dart' show UseSenseError;
 export 'src/usesense_flutter_platform_interface.dart'
     show UseSenseFlutterPlatform;
 export 'src/usesense_flutter_plugin.dart' show UseSenseFlutter;
+// The capture embedded in your own screen (platform view).
+export 'src/usesense_view.dart' show UseSenseView;
 export 'src/usesense_types.dart'
     show
         BrandingConfig,

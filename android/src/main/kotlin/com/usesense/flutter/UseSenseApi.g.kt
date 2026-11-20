@@ -11,6 +11,9 @@
 // added in the generator's own pattern. Pigeon 22.7.x now rejects message
 // classes named "Pigeon*", so this schema can't be regenerated without renaming
 // every class; keep pigeons/usesense_api.dart and the three .g files in step.
+//
+// HAND-EDITED (2.11.0): UseSenseHostApi.startVerificationWithToken
+// (clientToken, sessionType as its raw int) added in the same pattern.
 
 package com.usesense.flutter
 
@@ -61,7 +64,8 @@ enum class PigeonUseSenseEnvironment(val raw: Int) {
 /** The type of verification session. */
 enum class PigeonSessionType(val raw: Int) {
   ENROLLMENT(0),
-  AUTHENTICATION(1);
+  AUTHENTICATION(1),
+  LIVENESS(2);
 
   companion object {
     fun ofRaw(raw: Int): PigeonSessionType? {
@@ -305,6 +309,7 @@ private object UseSensePigeonCodec : StandardMessageCodec() {
 interface UseSenseHostApi {
   fun initialize(config: PigeonUseSenseConfig, callback: (Result<Unit>) -> Unit)
   fun startVerification(request: PigeonVerificationRequest, callback: (Result<PigeonUseSenseResult>) -> Unit)
+  fun startVerificationWithToken(clientToken: String, sessionType: PigeonSessionType, callback: (Result<PigeonUseSenseResult>) -> Unit)
   fun startRemoteEnrollment(remoteEnrollmentId: String, callback: (Result<PigeonUseSenseResult>) -> Unit)
   fun startRemoteVerification(remoteSessionId: String, callback: (Result<PigeonUseSenseResult>) -> Unit)
   fun isInitialized(): Boolean
@@ -349,6 +354,30 @@ interface UseSenseHostApi {
             val args = message as List<Any?>
             val requestArg = args[0] as PigeonVerificationRequest
             api.startVerification(requestArg) { result ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(wrapError(error))
+              } else {
+                reply.reply(wrapResult(result.getOrNull()))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(
+          binaryMessenger,
+          "dev.flutter.pigeon.usesense_flutter.UseSenseHostApi.startVerificationWithToken$separatedMessageChannelSuffix",
+          codec
+        )
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val clientTokenArg = args[0] as String
+            val sessionTypeArg = PigeonSessionType.ofRaw(args[1] as Int)!!
+            api.startVerificationWithToken(clientTokenArg, sessionTypeArg) { result ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(wrapError(error))

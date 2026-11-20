@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.usesense.flutter"
-version = "2.10.1"
+version = "2.11.0"
 
 android {
     namespace = "com.usesense.flutter"
@@ -81,7 +81,11 @@ dependencies {
     // judges pitch, and branding fixes.
     // 4.15.0 is the floor: the headless silent device check for Your KYC
     // (UseSense.deviceCheck), bridged as UseSenseDeviceCheck.
-    implementation("ai.usesense:sdk:4.15.0")
+    // 4.16.0 is the floor: SessionType.LIVENESS (liveness-only sessions),
+    // UseSense.startVerificationWithToken (client token, no API key on the
+    // device), the working embedded UseSenseFragment behind UseSenseView, and
+    // callbacks on the remote enrolment / verification flows.
+    implementation("ai.usesense:sdk:4.16.0")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time

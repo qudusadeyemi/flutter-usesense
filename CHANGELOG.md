@@ -4,6 +4,43 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.11.0] - 2026-11-20
+
+### Added
+- **`SessionType.liveness`**: a liveness-only session that checks a real person
+  is in front of the camera. The server creates no identity, enrols no face and
+  runs no 1:N duplicate search. Costs 1 credit. Bridged through pigeon
+  (`PigeonSessionType.liveness`, raw value 2; the generated files are edited by
+  hand) to the native SDKs, which reject an `identityId` on a liveness session
+  with `invalidConfig` (the server returns 400 for that).
+- **`UseSenseFlutter.startVerificationWithToken(clientToken:, sessionType:)`**:
+  keep the API key off the device. Your server calls
+  `POST /v1/sessions/create-token` and the app passes the single-use
+  `client_token`; the native SDK exchanges it (`POST /v1/sessions/exchange-token`)
+  and runs the same full-screen capture, with the same result and errors as
+  `startVerification`. `initialize()` is optional. A rejected token throws
+  the new `UseSenseError.invalidClientToken` (5002) with the reason in
+  `serverCode`. New pigeon host method (generated files edited by hand).
+- **`UseSenseView`** (and `UseSenseView.withToken`): the capture embedded in
+  your own screen, as a platform view hosting the native embedded components
+  (Android `UseSenseFragment` with hybrid composition, iOS
+  `UseSenseViewController` as a child view controller). Same config,
+  branding (code over dashboard), copy and errors as the full-screen flow;
+  one of `onResult` / `onError` / `onCancelled` fires once. Android needs
+  `MainActivity` to extend `FlutterFragmentActivity`.
+- Remote enrolment and verification on Android now complete from the native
+  SDK's callback (the decision, an error, or `sessionCancelled` when the
+  person leaves), as on iOS, instead of waiting for a decision event. A
+  disputed remote verification completes with decision `DISPUTED`.
+
+### Changed
+- Minimum Flutter 3.22 / Dart 3.4 (was 3.16 / 3.2), for `PopScope`
+  `onPopInvokedWithResult`, which `UseSenseView` uses for back navigation.
+- Native SDKs: iOS `UseSenseSDK` `~> 4.13.1` → **`~> 4.14.0`**, Android
+  `ai.usesense:sdk` 4.15.0 → **4.16.0** (the first versions with liveness;
+  Android 4.16.0 also adds the client-token start, the embedded Fragment and
+  the remote-flow callbacks).
+
 ## [2.10.1] - 2026-11-18
 
 ### Changed

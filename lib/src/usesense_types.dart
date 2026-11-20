@@ -25,6 +25,12 @@ enum SessionType {
 
   /// Authenticate an existing identity.
   authentication,
+
+  /// Liveness only: check that a real person is in front of the camera.
+  /// Creates no identity, enrols no face and runs no duplicate (1:N) search.
+  /// Do not set [VerificationRequest.identityId]; the session fails with
+  /// [UseSenseError.invalidConfig] (the server rejects it with a 400).
+  liveness,
 }
 
 /// Branding configuration for the SDK's capture screens.
@@ -136,7 +142,7 @@ class VerificationRequest {
   final String? externalUserId;
 
   /// The identity ID to authenticate against. Required for
-  /// [SessionType.authentication].
+  /// [SessionType.authentication]. Must not be set for [SessionType.liveness].
   final String? identityId;
 
   /// Arbitrary key-value metadata attached to the session.
@@ -157,7 +163,7 @@ class UseSenseResult {
   /// Unique session identifier.
   final String sessionId;
 
-  /// The session type (`enrollment` or `authentication`).
+  /// The session type (`enrollment`, `authentication` or `liveness`).
   final String? sessionType;
 
   /// The identity ID assigned during enrollment, or verified during
@@ -165,6 +171,8 @@ class UseSenseResult {
   final String? identityId;
 
   /// The verification decision: `APPROVE`, `REJECT`, or `MANUAL_REVIEW`.
+  /// A remote verification can also end `DISPUTED`, when the person disputes
+  /// the action instead of verifying it.
   final String decision;
 
   /// ISO 8601 timestamp of the decision.
