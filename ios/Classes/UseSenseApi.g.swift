@@ -84,6 +84,7 @@ enum PigeonUseSenseEnvironment: Int {
 enum PigeonSessionType: Int {
   case enrollment = 0
   case authentication = 1
+  case liveness = 2
 }
 
 enum PigeonEventType: Int {

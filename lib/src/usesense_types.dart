@@ -25,6 +25,12 @@ enum SessionType {
 
   /// Authenticate an existing identity.
   authentication,
+
+  /// Liveness only: check that a real person is in front of the camera.
+  /// Creates no identity, enrols no face and runs no duplicate (1:N) search.
+  /// Do not set [VerificationRequest.identityId]; the session fails with
+  /// [UseSenseError.invalidConfig] (the server rejects it with a 400).
+  liveness,
 }
 
 /// Branding configuration for the SDK's capture screens.
@@ -136,7 +142,7 @@ class VerificationRequest {
   final String? externalUserId;
 
   /// The identity ID to authenticate against. Required for
-  /// [SessionType.authentication].
+  /// [SessionType.authentication]. Must not be set for [SessionType.liveness].
   final String? identityId;
 
   /// Arbitrary key-value metadata attached to the session.
@@ -157,7 +163,7 @@ class UseSenseResult {
   /// Unique session identifier.
   final String sessionId;
 
-  /// The session type (`enrollment` or `authentication`).
+  /// The session type (`enrollment`, `authentication` or `liveness`).
   final String? sessionType;
 
   /// The identity ID assigned during enrollment, or verified during

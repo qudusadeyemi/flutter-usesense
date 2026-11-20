@@ -4,6 +4,20 @@ All notable changes to `usesense_flutter` will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.11.0] - 2026-11-20
+
+### Added
+- **`SessionType.liveness`**: a liveness-only session that checks a real person
+  is in front of the camera. The server creates no identity, enrols no face and
+  runs no 1:N duplicate search. Costs 1 credit. Bridged through pigeon
+  (`PigeonSessionType.liveness`, raw value 2; the generated files are edited by
+  hand) to the native SDKs, which reject an `identityId` on a liveness session
+  with `invalidConfig` (the server returns 400 for that).
+
+### Changed
+- Native SDKs: iOS `UseSenseSDK` `~> 4.13.1` → **`~> 4.14.0`**, Android
+  `ai.usesense:sdk` 4.15.0 → **4.16.0** (the first versions with liveness).
+
 ## [2.10.1] - 2026-11-18
 
 ### Changed

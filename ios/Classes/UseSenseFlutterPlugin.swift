@@ -198,6 +198,8 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
             sessionType = .enrollment
         case .authentication:
             sessionType = .authentication
+        case .liveness:
+            sessionType = .liveness
         }
 
         let nativeRequest = VerificationRequest(

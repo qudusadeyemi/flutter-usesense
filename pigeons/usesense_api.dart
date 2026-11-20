@@ -24,6 +24,7 @@ enum PigeonUseSenseEnvironment {
 enum PigeonSessionType {
   enrollment,
   authentication,
+  liveness,
 }
 
 /// Event types emitted during a verification session.

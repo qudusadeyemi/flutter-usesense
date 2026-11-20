@@ -22,6 +22,7 @@
 // matching `test/**_test.dart` gets picked up by `flutter test`.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:usesense_flutter/src/generated/usesense_api.g.dart';
 import 'package:usesense_flutter/usesense_flutter.dart';
 
 void main() {
@@ -75,6 +76,30 @@ void main() {
       );
       expect(request.sessionType, SessionType.authentication);
       expect(request.identityId, 'idn_abc123');
+    });
+
+    test('accepts liveness without identityId', () {
+      const request = VerificationRequest(
+        sessionType: SessionType.liveness,
+        externalUserId: 'user-1',
+      );
+      expect(request.sessionType, SessionType.liveness);
+      expect(request.identityId, isNull);
+    });
+  });
+
+  group('SessionType bridge', () {
+    test('every SessionType maps to the pigeon value of the same name', () {
+      // The method channel maps by index, so order and names must match.
+      expect(
+        SessionType.values.map((t) => t.name).toList(),
+        PigeonSessionType.values.map((t) => t.name).toList(),
+      );
+      expect(
+        PigeonSessionType.values[SessionType.liveness.index],
+        PigeonSessionType.liveness,
+      );
+      expect(PigeonSessionType.liveness.index, 2);
     });
   });
 

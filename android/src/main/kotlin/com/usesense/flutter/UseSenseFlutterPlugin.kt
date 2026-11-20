@@ -248,6 +248,7 @@ class UseSenseFlutterPlugin : FlutterPlugin, ActivityAware, UseSenseHostApi {
         val sessionType = when (request.sessionType) {
             PigeonSessionType.ENROLLMENT -> SessionType.ENROLLMENT
             PigeonSessionType.AUTHENTICATION -> SessionType.AUTHENTICATION
+            PigeonSessionType.LIVENESS -> SessionType.LIVENESS
         }
 
         val nativeRequest = VerificationRequest(

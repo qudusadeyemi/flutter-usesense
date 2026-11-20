@@ -31,7 +31,7 @@ Add `usesense_flutter` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  usesense_flutter: ^2.10.1
+  usesense_flutter: ^2.11.0
 ```
 
 Then run:
@@ -257,8 +257,8 @@ iOS and Android: `invalidToken` and `tokenExpired` (create a new check; a token 
 minutes), `nonceMismatch`, `invalidInput`, `outOfOrder` (start once, then finish once),
 `notFound`, `unavailable`, `networkError`, `timeout` (retried once by the SDK already),
 `invalidConfig`, `cancelled`. The app is never told the score; read it on your server with
-`GET /v1/device-checks/:id`. Needs native SDKs iOS 4.13.1 and Android 4.15.0 (pinned by this
-plugin).
+`GET /v1/device-checks/:id`. Needs native SDKs iOS 4.13.1 and Android 4.15.0 or later (this
+plugin pins newer ones).
 
 ## Configuration Reference
 
@@ -343,6 +343,19 @@ final result = await useSense.startVerification(
   VerificationRequest(
     sessionType: SessionType.authentication,
     identityId: 'idt_abc123',  // from a prior enrollment result
+  ),
+);
+```
+
+### Liveness only
+
+Checks that a real person is in front of the camera, and nothing else. No identity is created, no face is enrolled and no 1:N duplicate search runs. A liveness session costs 1 credit. Do not set `identityId`: the session fails with `UseSenseError.invalidConfig` (the server rejects it with a 400).
+
+```dart
+final result = await useSense.startVerification(
+  const VerificationRequest(
+    sessionType: SessionType.liveness,
+    externalUserId: 'user_123', // optional, for your own records
   ),
 );
 ```

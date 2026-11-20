@@ -61,7 +61,8 @@ enum class PigeonUseSenseEnvironment(val raw: Int) {
 /** The type of verification session. */
 enum class PigeonSessionType(val raw: Int) {
   ENROLLMENT(0),
-  AUTHENTICATION(1);
+  AUTHENTICATION(1),
+  LIVENESS(2);
 
   companion object {
     fun ofRaw(raw: Int): PigeonSessionType? {

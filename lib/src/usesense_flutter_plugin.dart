@@ -83,6 +83,8 @@ class UseSenseFlutter {
   /// For enrollment sessions, set [VerificationRequest.sessionType] to
   /// [SessionType.enrollment]. For authentication, use
   /// [SessionType.authentication] and provide [VerificationRequest.identityId].
+  /// For a liveness-only check (no enrolment, no duplicate search), use
+  /// [SessionType.liveness] without an identity id.
   Future<UseSenseResult> startVerification(VerificationRequest request) {
     return _platform.startVerification(request);
   }
