@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.usesense.flutter"
-version = "2.11.0"
+version = "2.11.1"
 
 android {
     namespace = "com.usesense.flutter"
@@ -85,7 +85,9 @@ dependencies {
     // UseSense.startVerificationWithToken (client token, no API key on the
     // device), the working embedded UseSenseFragment behind UseSenseView, and
     // callbacks on the remote enrolment / verification flows.
-    implementation("ai.usesense:sdk:4.16.0")
+    // 4.16.1: R8 keep rules (face mesh, Play services, AGP 9 launch crash) and
+    // one Flow end screen. Flutter release builds are minified by default.
+    implementation("ai.usesense:sdk:4.16.1")
 
     // NOTE: do NOT declare io.flutter:flutter_embedding_* here. The Flutter
     // Gradle plugin injects it into every plugin subproject at build time
