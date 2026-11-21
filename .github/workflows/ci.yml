@@ -68,30 +68,12 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Regenerate the example's iOS platform + set deployment target
-        # example/ios is gitignored (example/.gitignore), so the Runner project and
-        # Podfile are not committed -- regenerate them. flutter create scaffolds a
-        # lower default iOS target, but the plugin podspec requires iOS 16.0, so set
-        # the Podfile platform before pod install (otherwise pod install fails with a
-        # deployment-target mismatch). --config-only generates the Podfile + xcconfig
-        # without compiling; the next step then builds (pod install resolves the
-        # UseSenseSDK ~> 4.x pin fresh from CocoaPods, no committed lock to drift).
+      - name: Generate the example's iOS platform
+        # example/ios is gitignored. The script applies every change the plugin
+        # README asks of an integrator (iOS 16 target, static linkage, camera
+        # and microphone usage strings), so CI builds the same app people run.
         working-directory: example
-        run: |
-          flutter create --platforms=ios .
-          flutter pub get
-          # --config-only generates the Podfile but also runs pod install, which fails
-          # on the default low platform. Tolerate that (|| true) -- the Podfile is
-          # written before the failure -- then pin the platform so the REAL build below
-          # resolves. Pods read the Podfile platform; the Runner app target reads its
-          # own IPHONEOS_DEPLOYMENT_TARGET in the xcodeproj, so set BOTH to 16.0.
-          flutter build ios --no-codesign --config-only || true
-          sed -i '' "s/# *platform :ios.*/platform :ios, '16.0'/" ios/Podfile
-          # UseSenseSDK vendors a static xcframework (MediaPipe), which Flutter's
-          # default dynamic use_frameworks! rejects. Force static linkage (matches
-          # the maintained example Podfile).
-          sed -i '' "s/use_frameworks!.*/use_frameworks! :linkage => :static/" ios/Podfile
-          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/Runner.xcodeproj/project.pbxproj
+        run: tool/setup_platforms.sh ios
 
       - name: Build iOS example
         run: flutter build ios --no-codesign --debug
@@ -128,27 +110,12 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Regenerate the example's Android platform
-        # example/android is gitignored (example/.gitignore), so the Gradle
-        # project is not committed -- regenerate it. The generated release
-        # buildType signs with the debug keys (flutter create's default), so no
-        # keystore is needed to exercise the release compile.
-        #
-        # Force the app minSdk to 28: the native ai.usesense:sdk requires
-        # minSdk 28, so a consuming app on flutter's lower default fails the
-        # release manifest merge ("uses-sdk:minSdkVersion 24 cannot be smaller
-        # than version 28 declared in library [ai.usesense:sdk]"). Integrators
-        # must do the same in their own app/build.gradle -- this mirrors that.
+      - name: Generate the example's Android platform
+        # example/android is gitignored. The script sets minSdk 28 and the
+        # FlutterFragmentActivity the embedded view needs. The generated release
+        # build signs with the debug keys and runs R8, like an integrator's.
         working-directory: example
-        run: |
-          flutter create --platforms=android .
-          flutter pub get
-          sed -i -E 's/minSdk(Version)? *=? *[a-zA-Z0-9_.().]+/minSdk = 28/' android/app/build.gradle.kts
-          # UseSenseView hosts the native UseSenseFragment, which needs a
-          # FragmentActivity: flutter create scaffolds a FlutterActivity.
-          find android/app/src/main -name MainActivity.kt -exec sed -i \
-            -e 's/embedding.android.FlutterActivity/embedding.android.FlutterFragmentActivity/' \
-            -e 's/: FlutterActivity()/: FlutterFragmentActivity()/' {} +
+        run: tool/setup_platforms.sh android
 
       - name: Build Android example (release)
         run: flutter build apk --release

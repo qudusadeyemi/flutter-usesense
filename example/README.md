@@ -23,10 +23,12 @@ and error handling.
    screen mints one with the key above (demo only: in production your server
    calls `POST /v1/sessions/create-token`).
 
-The `android/` and `ios/` folders are not committed: run
-`flutter create --platforms=android,ios .` first, set `minSdk = 28` in
-`android/app/build.gradle.kts`, and for the embedded view change
-`MainActivity` to extend `FlutterFragmentActivity`.
+The `android/` and `ios/` folders are not committed. Generate them with
+`tool/setup_platforms.sh` (from this folder). Besides `flutter create`, it
+makes the changes your own app needs too: `minSdk = 28` and a
+`FlutterFragmentActivity` on Android; the iOS 16 target, static pod linkage,
+and the camera and microphone usage strings on iOS (without those, iOS ends
+the app as soon as the capture opens the camera).
 
 ## What This Demonstrates
 

@@ -32,7 +32,7 @@ final class UseSenseFlowsBridge: NSObject {
                 result(FlutterError(code: "unknown", message: "Invalid apiBaseUrl", details: nil))
                 return
             }
-            guard let presenter = Self.topViewController() else {
+            guard let presenter = UseSensePresenter.topViewController() else {
                 result(FlutterError(code: "unknown", message: "No view controller to present from", details: nil))
                 return
             }
@@ -98,27 +98,4 @@ final class UseSenseFlowsBridge: NSObject {
         }
     }
 
-    /// Find the top-most view controller to present from. Mirrors the
-    /// pattern the V4 bridge uses; works across UIKit + SceneDelegate apps
-    /// and falls back gracefully to `keyWindow.rootViewController`.
-    private static func topViewController() -> UIViewController? {
-        var root: UIViewController?
-        if #available(iOS 13.0, *) {
-            for scene in UIApplication.shared.connectedScenes {
-                guard let windowScene = scene as? UIWindowScene else { continue }
-                if let keyWindow = windowScene.windows.first(where: { $0.isKeyWindow }) ?? windowScene.windows.first {
-                    root = keyWindow.rootViewController
-                    break
-                }
-            }
-        }
-        if root == nil {
-            root = UIApplication.shared.keyWindow?.rootViewController
-        }
-        var current = root
-        while let presented = current?.presentedViewController {
-            current = presented
-        }
-        return current
-    }
 }

@@ -189,7 +189,7 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
             return
         }
 
-        guard let rootVC = UIApplication.shared.delegate?.window??.rootViewController else {
+        guard let rootVC = UseSensePresenter.topViewController() else {
             completion(.failure(PigeonError(
                 code: "sdk_not_initialized",
                 message: "Root view controller is not available.",
@@ -229,7 +229,7 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
             )))
             return
         }
-        guard let rootVC = UIApplication.shared.delegate?.window??.rootViewController else {
+        guard let rootVC = UseSensePresenter.topViewController() else {
             completion(.failure(PigeonError(
                 code: "sdk_not_initialized",
                 message: "Root view controller is not available.",
@@ -308,7 +308,7 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
             return
         }
 
-        guard let rootVC = UIApplication.shared.delegate?.window??.rootViewController else {
+        guard let rootVC = UseSensePresenter.topViewController() else {
             completion(.failure(PigeonError(
                 code: "sdk_not_initialized",
                 message: "Root view controller is not available.",
@@ -353,7 +353,7 @@ public class UseSenseFlutterPlugin: NSObject, FlutterPlugin, UseSenseHostApi {
             return
         }
 
-        guard let rootVC = UIApplication.shared.delegate?.window??.rootViewController else {
+        guard let rootVC = UseSensePresenter.topViewController() else {
             completion(.failure(PigeonError(
                 code: "sdk_not_initialized",
                 message: "Root view controller is not available.",
