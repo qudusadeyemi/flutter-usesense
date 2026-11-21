@@ -30,12 +30,14 @@ void main() {
     final gradle = readPackageFile('android/build.gradle.kts');
 
     expect(
-      RegExp(r"s\.dependency 'UseSenseSDK', '~> \d+\.\d+\.\d+'").hasMatch(podspec),
+      RegExp(r"s\.dependency 'UseSenseSDK', '~> \d+\.\d+\.\d+'")
+          .hasMatch(podspec),
       isTrue,
       reason: 'iOS: pin with ~> A.B.C so the patch range is explicit.',
     );
     expect(
-      RegExp(r'implementation\("ai\.usesense:sdk:\d+\.\d+\.\d+"\)').hasMatch(gradle),
+      RegExp(r'implementation\("ai\.usesense:sdk:\d+\.\d+\.\d+"\)')
+          .hasMatch(gradle),
       isTrue,
       reason: 'Android: pin an exact version.',
     );
