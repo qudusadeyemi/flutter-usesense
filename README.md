@@ -31,7 +31,7 @@ Add `usesense_flutter` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  usesense_flutter: ^2.11.0
+  usesense_flutter: ^2.11.1
 ```
 
 Then run:
@@ -53,7 +53,7 @@ platform :ios, '16.0'
 > **On-device face mesh:** face capture only records frames when face mesh detects
 > a face, so MediaPipe must be linked or the liveness step fails with **"No frames
 > captured."** As of UseSenseSDK 4.4.0 (pinned by this plugin) MediaPipe is
-> vendored and pulled in automatically — you do **not** add `MediaPipeTasksVision`,
+> vendored and pulled in automatically: you do **not** add `MediaPipeTasksVision`,
 > a `pre_install` Info.plist patch hook, or any linkage change. UseSenseSDK 4.4 is
 > a `static_framework`, so it works under the default `use_frameworks!`.
 
@@ -80,7 +80,7 @@ The native Android SDK is published to Maven Central at `ai.usesense:sdk`.
 declaration is required. The Flutter plugin pulls the native dep
 transitively when you run `flutter pub get`.
 
-> **Minimum SDK — required.** The native `ai.usesense:sdk` requires
+> **Minimum SDK, required.** The native `ai.usesense:sdk` requires
 > `minSdk 28` (Android 9.0). Set it in your app's `android/app/build.gradle`
 > (or `build.gradle.kts`); a lower value fails the Android **release** build at
 > manifest merge with `uses-sdk:minSdkVersion … cannot be smaller than version 28
@@ -161,6 +161,69 @@ try {
 // 4. Clean up when done
 useSense.dispose();
 ```
+
+---
+
+## Run a Flow
+
+Flows are the main integration path: you build the steps (consent, forms, documents, face capture, registry checks, review) in the dashboard, and the native runner shows them. No API key ships in the app, and `initialize` is not needed.
+
+**1. Your server starts the run** with its secret key and returns `flowRun.id` and `sdkToken` to the app:
+
+```bash
+curl -X POST https://api.usesense.ai/v1/flow-runs \
+  -H "x-api-key: sk_..." -H "Content-Type: application/json" \
+  -d '{"flowId":"YOUR_FLOW_ID","subject":{"externalRef":"user_123"},"mint_sdk_token":true}'
+# 201 { "flowRun": { "id": "...", "state": "pending", ... }, "stepRuns": [], "sdkToken": "...", "expiresAt": "..." }
+```
+
+The token is bound to that run and expires after 30 minutes (`sdk_token_ttl_seconds`, 60 s to 24 h).
+
+**2. The app runs it:**
+
+```dart
+import 'package:usesense_flutter/usesense_flutter.dart';
+
+try {
+  final FlowRunResult result = await UseSenseFlows.instance.runFlow(
+    flowRunId: flowRunId,
+    sdkToken: sdkToken,
+  );
+  // result.flowRunId, result.state, result.outcome (approve, reject, manualReview or null)
+  if (result.state == FlowRunState.awaitingReview) {
+    showUnderReview();
+  } else {
+    showDone();
+  }
+} on FlowError catch (e) {
+  print('Flow error ${e.code.name}: ${e.message}');
+}
+```
+
+`runFlow` presents the native full-screen runner (iOS `UseSenseFlows.run`, Android `UseSenseFlows.run`) and completes once. Optional parameters: `apiBaseUrl`, `appearance` and `copy` (see [White-labeling](#white-labeling-appearance--copy)).
+
+**3. The result.** `FlowRunResult.state` is one of:
+
+| `state` | Meaning |
+|---------|---------|
+| `completed` | The run finished; `outcome` holds the Flow's outcome. |
+| `awaitingReview` | Held for a human reviewer. The person sees the "Under review" screen. The final decision arrives later by webhook (`flow_run.completed`). |
+| `cancelled` | The person left the run. |
+| `errored` | A step failed and the Flow ended in error. |
+| `abandoned` | The run timed out without the person finishing. |
+
+The client result is for your UI only. Decide on your server, from the `flow_run.completed` webhook or `GET /v1/flow-runs/:id` with your API key.
+
+**4. Errors.** `runFlow` throws a `FlowError` with a `code` (`FlowErrorCode`) and `message`:
+
+| `code` | What to do |
+|--------|------------|
+| `tokenExpired`, `tokenInvalid` | Start a new run on your server and call `runFlow` again. |
+| `networkUnavailable` | Let the person retry when they are back online. |
+| `permissionDenied` | Camera access was refused; explain how to allow it. |
+| `providerUnavailable` | A verification provider is down; retry later. |
+| `unsupportedAction` | The Flow uses a step this SDK version cannot show; upgrade the plugin. |
+| `cancelled`, `invalidInput`, `unknown` | `invalidInput` is shown inline by the runner; treat the rest as a failed attempt. Capture, upload and run timeouts from the native runner arrive as `unknown`. |
 
 ---
 
@@ -248,7 +311,7 @@ UseSenseView.withToken(
 
 Every capture screen, and the Flows runner, is customizable through two optional
 inputs: `appearance` (`FlowAppearance`) and `copy` (`FlowCopy`). Pass them in session
-mode on `BrandingConfig`, or per Flow run on `UseSenseFlows.runFlow`. Per field, code
+mode on `BrandingConfig`, or per Flow run on `UseSenseFlows.instance.runFlow`. Per field, code
 beats the dashboard (Flow, then org), which beats the built-in default. Every field is
 optional; anything you omit keeps the dashboard value, then the Sense default.
 
@@ -291,7 +354,7 @@ shipped English.
 Flows:
 
 ```dart
-await UseSenseFlows.runFlow(
+await UseSenseFlows.instance.runFlow(
   flowRunId: flowRunId,
   sdkToken: sdkToken,
   appearance: FlowAppearance(
@@ -861,7 +924,7 @@ Run `cd ios && pod install` in your Flutter project. If the issue persists, try 
 
 ### iOS face step fails with "No frames captured"
 
-The face liveness step records frames only when on-device face mesh (MediaPipe) is linked. MediaPipe is bundled with `UseSenseSDK >= 4.4.0`, so this almost always means the native SDK is below 4.4.0. Fix: ensure the plugin (and therefore `UseSenseSDK >= 4.4.0`) is up to date — `flutter pub upgrade`, then `cd ios && pod install` (try `pod repo update` first if it can't resolve `UseSenseMediaPipe`).
+The face liveness step records frames only when on-device face mesh (MediaPipe) is linked. MediaPipe is bundled with `UseSenseSDK >= 4.4.0`, so this almost always means the native SDK is below 4.4.0. Fix: ensure the plugin (and therefore `UseSenseSDK >= 4.4.0`) is up to date: `flutter pub upgrade`, then `cd ios && pod install` (try `pod repo update` first if it can't resolve `UseSenseMediaPipe`).
 
 ### Events not received
 
@@ -914,7 +977,8 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ## Support
 
-- **Documentation:** [watchtower.usesense.ai/developer-docs](https://watchtower.usesense.ai/developer-docs)
+- **Guides:** [docs.usesense.ai](https://docs.usesense.ai)
+- **API reference:** [docs.usesense.ai/api](https://docs.usesense.ai/api)
 - **Dashboard:** [watchtower.usesense.ai](https://watchtower.usesense.ai)
 - **Email:** [support@usesense.ai](mailto:support@usesense.ai)
 - **Repository:** [github.com/qudusadeyemi/flutter-usesense](https://github.com/qudusadeyemi/flutter-usesense)
